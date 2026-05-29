@@ -1,0 +1,11 @@
+# Build artifacts
+/galapagos
+*.wasm
+web/wasm_exec.js
+
+# Saved genomes produced by training/replay
+best.json
+*.genome.json
+
+# Spec is tracked outside the repo
+SPEC.md

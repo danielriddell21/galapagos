@@ -18,24 +18,40 @@ go build ./cmd/galapagos
 
 ## Usage
 
-Train headlessly and save the best driver:
+Train the racing demo headlessly and save the best driver:
 
 ```sh
 galapagos race --headless --config configs/racing.yaml --out best.json
 ```
 
-Replay a saved driver:
+Replay a saved driver (reproduces the trained result exactly):
 
 ```sh
 galapagos replay --genome best.json --seed 42
 ```
 
-Run the windowed demo (requires a display and OpenGL; build with the `ebiten`
-tag):
+Other algorithms and environments share the same interfaces:
 
 ```sh
-go run -tags ebiten ./cmd/galapagos race --config configs/racing.yaml
+galapagos race --headless --config configs/racing-neat.yaml  # NEAT evolves topology
+galapagos cartpole                                           # genetic algorithm balances a pole
+galapagos maze                                               # tabular Q-learning solves a maze
 ```
+
+### Windowed demo
+
+The live, watchable demo requires a display and OpenGL and is built with the
+`ebiten` tag:
+
+```sh
+just gui            # or: go run -tags ebiten ./cmd/galapagos race --config configs/racing.yaml
+```
+
+Controls: `space` pause, `f` follow/fit camera, `+`/`-` speed, `r` regenerate
+track, `s` save best, `l` load best, `d` toggle sensor rays.
+
+For a browser build, `just wasm` compiles the demo to WebAssembly and stages the
+`web/` directory.
 
 ## Layout
 

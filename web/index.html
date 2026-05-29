@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Galapagos</title>
+    <style>
+      body { margin: 0; background: #12141a; }
+      canvas { display: block; }
+    </style>
+  </head>
+  <body>
+    <!-- wasm_exec.js ships with the Go toolchain; `make wasm` copies it here. -->
+    <script src="wasm_exec.js"></script>
+    <script>
+      const go = new Go();
+      WebAssembly.instantiateStreaming(fetch("galapagos.wasm"), go.importObject).then((result) => {
+        go.run(result.instance);
+      });
+    </script>
+  </body>
+</html>

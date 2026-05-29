@@ -13,6 +13,7 @@ import (
 // Racing is the configuration for the racing demo and its genetic algorithm.
 // Field names match the YAML keys in configs/racing.yaml.
 type Racing struct {
+	Agent         string  `yaml:"agent"` // "ga" or "neat"
 	Population    int     `yaml:"population"`
 	EliteFraction float64 `yaml:"elite_fraction"`
 	MutationRate  float64 `yaml:"mutation_rate"`
@@ -27,6 +28,7 @@ type Racing struct {
 // DefaultRacing returns the configuration documented in the spec.
 func DefaultRacing() Racing {
 	return Racing{
+		Agent:         "ga",
 		Population:    100,
 		EliteFraction: 0.1,
 		MutationRate:  0.05,
@@ -42,6 +44,8 @@ func DefaultRacing() Racing {
 // Validate reports the first invalid field, if any.
 func (c Racing) Validate() error {
 	switch {
+	case c.Agent != "ga" && c.Agent != "neat":
+		return fmt.Errorf(`agent must be "ga" or "neat", got %q`, c.Agent)
 	case c.Population < 2:
 		return fmt.Errorf("population must be at least 2, got %d", c.Population)
 	case c.EliteFraction < 0 || c.EliteFraction >= 1:

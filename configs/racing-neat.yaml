@@ -1,0 +1,8 @@
+# Racing demo evolved with NEAT (topology evolution) instead of the
+# fixed-topology genetic algorithm. Train with --headless.
+agent: neat
+population: 100
+rays: 7
+max_steps: 2000
+generations: 200
+seed: 42

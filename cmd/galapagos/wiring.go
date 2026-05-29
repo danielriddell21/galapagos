@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/danielriddell21/galapagos/internal/agents/ga"
+	"github.com/danielriddell21/galapagos/internal/agents/neat"
 	"github.com/danielriddell21/galapagos/internal/config"
 	"github.com/danielriddell21/galapagos/internal/core"
 	"github.com/danielriddell21/galapagos/internal/envs/racing"
@@ -29,6 +30,24 @@ func racingConfigFrom(c config.Racing) racing.Config {
 	rc := racing.DefaultConfig()
 	rc.Sensors.Count = c.Rays
 	return rc
+}
+
+// neatConfigFrom builds a NEAT config from the run config.
+func neatConfigFrom(c config.Racing) neat.Config {
+	nc := neat.DefaultConfig()
+	nc.Population = c.Population
+	nc.Inputs = c.Rays + 1
+	nc.Outputs = 2
+	nc.Seed = c.Seed
+	return nc
+}
+
+// buildAgent constructs the configured population-based agent.
+func buildAgent(c config.Racing) core.PopulationAgent {
+	if c.Agent == "neat" {
+		return neat.New(neatConfigFrom(c))
+	}
+	return ga.New(gaConfigFrom(c))
 }
 
 // envFactory returns a factory that builds independent racing environments,

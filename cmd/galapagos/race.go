@@ -36,6 +36,9 @@ func init() {
 			if headless {
 				return runHeadless(cfg, out)
 			}
+			if cfg.Agent == "neat" {
+				return fmt.Errorf("the windowed demo runs the genetic algorithm; use --headless to train with neat")
+			}
 			return launchGUI(cfg, out)
 		},
 	}
@@ -49,24 +52,27 @@ func init() {
 // cfg is a tiny helper so the flag default reflects the built-in seed.
 func cfg() config.Racing { return config.DefaultRacing() }
 
-// runHeadless evolves the population at full speed with no rendering and saves
-// the best genome.
+// runHeadless evolves the population at full speed with no rendering. For the
+// genetic algorithm it also saves the best genome, which can be replayed; NEAT
+// genomes carry topology and are not yet serializable.
 func runHeadless(c config.Racing, out string) error {
 	log := slog.New(slog.NewTextHandler(os.Stderr, nil))
-	pop := ga.New(gaConfigFrom(c))
+	agent := buildAgent(c)
 	rc := racingConfigFrom(c)
 	tel := sim.NewTelemetry(c.Generations, log)
 
-	log.Info("training", "generations", c.Generations, "population", c.Population, "seed", c.Seed)
-	sim.TrainHeadless(envFactory(rc), pop, sim.RunConfig{
+	log.Info("training", "agent", c.Agent, "generations", c.Generations, "population", c.Population, "seed", c.Seed)
+	sim.TrainHeadless(envFactory(rc), agent, sim.RunConfig{
 		Seed:        c.Seed,
 		MaxSteps:    c.MaxSteps,
 		Generations: c.Generations,
 	}, tel)
 
-	if err := pop.SaveBest(out); err != nil {
-		return err
+	if pop, ok := agent.(*ga.Population); ok {
+		if err := pop.SaveBest(out); err != nil {
+			return err
+		}
+		fmt.Printf("saved best genome to %s\n", out)
 	}
-	fmt.Printf("saved best genome to %s\n", out)
 	return nil
 }
