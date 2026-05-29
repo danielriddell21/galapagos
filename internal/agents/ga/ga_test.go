@@ -1,0 +1,149 @@
+package ga
+
+import (
+	"math"
+	"math/rand/v2"
+	"path/filepath"
+	"slices"
+	"testing"
+
+	"github.com/danielriddell21/galapagos/internal/core"
+)
+
+func testConfig() Config {
+	return Config{
+		Population:    20,
+		EliteFraction: 0.1,
+		MutationRate:  0.05,
+		MutationStd:   0.2,
+		HiddenSize:    8,
+		Inputs:        8,
+		Outputs:       2,
+		Seed:          42,
+	}
+}
+
+func TestGenomeLen(t *testing.T) {
+	// 8*8 + 8 + 8*2 + 2 = 64 + 8 + 16 + 2 = 90
+	if got := GenomeLen(8, 8, 2); got != 90 {
+		t.Fatalf("GenomeLen = %d, want 90", got)
+	}
+}
+
+func TestNetForwardShapeAndRange(t *testing.T) {
+	cfg := testConfig()
+	rng := rand.New(rand.NewPCG(1, 2))
+	g := randomGenome(GenomeLen(cfg.Inputs, cfg.HiddenSize, cfg.Outputs), rng)
+	n := newNet(cfg.Inputs, cfg.HiddenSize, cfg.Outputs, g)
+	out := n.forward(make([]float64, cfg.Inputs))
+	if len(out) != cfg.Outputs {
+		t.Fatalf("output len = %d, want %d", len(out), cfg.Outputs)
+	}
+	// With zero input, output equals the output biases (finite).
+	for _, v := range out {
+		if math.IsNaN(v) || math.IsInf(v, 0) {
+			t.Fatalf("non-finite output %g", v)
+		}
+	}
+}
+
+func TestActionRanges(t *testing.T) {
+	cfg := testConfig()
+	rng := rand.New(rand.NewPCG(5, 9))
+	m := newIndividual(cfg, randomGenome(GenomeLen(cfg.Inputs, cfg.HiddenSize, cfg.Outputs), rng))
+	for range 100 {
+		obs := make([]float64, cfg.Inputs)
+		for i := range obs {
+			obs[i] = rng.Float64()
+		}
+		v := m.Act(fakeState(obs)).Vector()
+		if v[0] < -1 || v[0] > 1 {
+			t.Fatalf("steering %g out of [-1,1]", v[0])
+		}
+		if v[1] < 0 || v[1] > 1 {
+			t.Fatalf("throttle %g out of [0,1]", v[1])
+		}
+	}
+}
+
+func TestPopulationReproducible(t *testing.T) {
+	a := New(testConfig())
+	b := New(testConfig())
+	ia, ib := collect(a), collect(b)
+	for i := range ia {
+		if !slices.Equal(ia[i].Genome(), ib[i].Genome()) {
+			t.Fatalf("member %d genome differs between identical seeds", i)
+		}
+	}
+}
+
+func TestEvolvePreservesEliteAndIsDeterministic(t *testing.T) {
+	p1 := New(testConfig())
+	assignFitness(p1)
+	bestBefore := slices.Clone(p1.Best())
+	p1.Evolve()
+	// The top elite genome must survive unmutated as some member.
+	if !containsGenome(p1, bestBefore) {
+		t.Fatal("elite genome did not survive evolution unmutated")
+	}
+
+	// A second identically-seeded run must evolve identically.
+	p2 := New(testConfig())
+	assignFitness(p2)
+	p2.Evolve()
+	for i, m := range collect(p1) {
+		if !slices.Equal(m.Genome(), collect(p2)[i].Genome()) {
+			t.Fatalf("evolution not deterministic at member %d", i)
+		}
+	}
+}
+
+func TestSaveLoadRoundTrip(t *testing.T) {
+	p := New(testConfig())
+	assignFitness(p)
+	path := filepath.Join(t.TempDir(), "best.json")
+	if err := p.SaveBest(path); err != nil {
+		t.Fatalf("SaveBest: %v", err)
+	}
+	sg, err := LoadGenome(path)
+	if err != nil {
+		t.Fatalf("LoadGenome: %v", err)
+	}
+	if !slices.Equal(sg.Genome, p.Best()) {
+		t.Fatal("loaded genome differs from saved best")
+	}
+	d := NewDriver(sg)
+	if got := len(d.Act(fakeState(make([]float64, sg.Inputs))).Vector()); got != sg.Outputs {
+		t.Fatalf("driver action len = %d, want %d", got, sg.Outputs)
+	}
+}
+
+// --- test helpers ---
+
+type fakeState []float64
+
+func (s fakeState) Observation() []float64 { return s }
+
+func collect(p *Population) []core.Individual {
+	var out []core.Individual
+	for m := range p.All() {
+		out = append(out, m)
+	}
+	return out
+}
+
+// assignFitness gives each member a distinct fitness so ranking is unambiguous.
+func assignFitness(p *Population) {
+	for i, m := range collect(p) {
+		m.SetFitness(core.Reward(i))
+	}
+}
+
+func containsGenome(p *Population, g []float64) bool {
+	for m := range p.All() {
+		if slices.Equal(m.Genome(), g) {
+			return true
+		}
+	}
+	return false
+}

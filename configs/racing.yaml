@@ -1,0 +1,11 @@
+# Racing demo configuration. A run is fully reproducible from this file plus
+# the seed below.
+population: 100
+elite_fraction: 0.1
+mutation_rate: 0.05
+mutation_std: 0.2
+hidden_size: 8
+rays: 7
+max_steps: 2000
+generations: 200
+seed: 42
