@@ -28,6 +28,24 @@ func (s SensorParams) rayAngles() []float64 {
 	return angles
 }
 
+// rayEndpoints returns the world-space endpoint of each sensor ray, clamped to
+// the maximum range, for the debug overlay.
+func rayEndpoints(c *car, walls [][2]vec, s SensorParams) []vec {
+	out := make([]vec, s.Count)
+	for i, off := range s.rayAngles() {
+		ang := c.heading + off
+		dir := vec{math.Cos(ang), math.Sin(ang)}
+		nearest := s.MaxRange
+		for _, w := range walls {
+			if d, ok := rayHit(c.pos, dir, w[0], w[1]); ok && d < nearest {
+				nearest = d
+			}
+		}
+		out[i] = add(c.pos, scale(dir, nearest))
+	}
+	return out
+}
+
 // sense casts the sensor rays from the car and returns each ray's normalized
 // distance to the nearest wall in [0,1], where 1 means nothing within range.
 func sense(c *car, walls [][2]vec, s SensorParams) []float64 {

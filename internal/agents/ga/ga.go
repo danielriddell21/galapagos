@@ -1,6 +1,7 @@
 package ga
 
 import (
+	"fmt"
 	"iter"
 	"math"
 	"math/rand/v2"
@@ -115,6 +116,19 @@ func (p *Population) EndEpisode(total core.Reward) {}
 
 // Best returns the genome of the fittest member, for saving.
 func (p *Population) Best() []float64 { return clone(p.best().genome) }
+
+// SetMemberGenome replaces member i's genome, for injecting a loaded driver
+// into a running population. The genome must match the network shape.
+func (p *Population) SetMemberGenome(i int, genome []float64) error {
+	if i < 0 || i >= len(p.members) {
+		return fmt.Errorf("member index %d out of range [0,%d)", i, len(p.members))
+	}
+	if want := GenomeLen(p.cfg.Inputs, p.cfg.HiddenSize, p.cfg.Outputs); len(genome) != want {
+		return fmt.Errorf("genome length %d does not match shape (want %d)", len(genome), want)
+	}
+	p.members[i] = newIndividual(p.cfg, clone(genome))
+	return nil
+}
 
 // best returns the fittest member.
 func (p *Population) best() *individual {

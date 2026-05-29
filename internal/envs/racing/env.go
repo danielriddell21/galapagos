@@ -191,6 +191,23 @@ func (e *Env) SetBest(i int) { e.best = i }
 // Track exposes the generated track for camera fitting and inspection.
 func (e *Env) Track() *Track { return e.track }
 
+// CarPosition returns the world position of car i, for camera following.
+func (e *Env) CarPosition(i int) core.Vec2 {
+	p := e.bodies[i].pos
+	return core.Vec2{X: p.X, Y: p.Y}
+}
+
+// SensorEndpoints returns the world-space endpoint of each sensor ray for car
+// i, for the debug overlay. The shared origin is the car's position.
+func (e *Env) SensorEndpoints(i int) (origin core.Vec2, ends []core.Vec2) {
+	c := e.bodies[i]
+	origin = core.Vec2{X: c.pos.X, Y: c.pos.Y}
+	for _, p := range rayEndpoints(c, e.walls, e.cfg.Sensors) {
+		ends = append(ends, core.Vec2{X: p.X, Y: p.Y})
+	}
+	return origin, ends
+}
+
 // decode extracts steering and throttle from an action vector.
 func decode(a core.Action) (steering, throttle float64) {
 	v := a.Vector()

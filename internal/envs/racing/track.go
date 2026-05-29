@@ -155,6 +155,21 @@ func (t *Track) setStart() {
 	t.StartDir = normalize(sub(t.Center[1], t.Center[0]))
 }
 
+// Bounds returns the axis-aligned bounding box of the track's outer wall, for
+// fitting the camera to the whole circuit.
+func (t *Track) Bounds() (minX, minY, maxX, maxY float64) {
+	if len(t.Outer) == 0 {
+		return 0, 0, 0, 0
+	}
+	minX, minY = t.Outer[0].X, t.Outer[0].Y
+	maxX, maxY = minX, minY
+	for _, p := range t.Outer {
+		minX, maxX = min(minX, p.X), max(maxX, p.X)
+		minY, maxY = min(minY, p.Y), max(maxY, p.Y)
+	}
+	return minX, minY, maxX, maxY
+}
+
 // walls returns the inner and outer wall segments for collision and raycasting.
 func (t *Track) walls() [][2]vec {
 	n := len(t.Center)

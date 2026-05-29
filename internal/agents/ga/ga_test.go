@@ -118,6 +118,26 @@ func TestSaveLoadRoundTrip(t *testing.T) {
 	}
 }
 
+func TestSetMemberGenome(t *testing.T) {
+	p := New(testConfig())
+	g := make([]float64, GenomeLen(p.cfg.Inputs, p.cfg.HiddenSize, p.cfg.Outputs))
+	for i := range g {
+		g[i] = 0.5
+	}
+	if err := p.SetMemberGenome(0, g); err != nil {
+		t.Fatalf("SetMemberGenome: %v", err)
+	}
+	if !slices.Equal(collect(p)[0].Genome(), g) {
+		t.Fatal("member 0 genome not replaced")
+	}
+	if err := p.SetMemberGenome(0, g[:3]); err == nil {
+		t.Fatal("expected error for wrong-length genome")
+	}
+	if err := p.SetMemberGenome(99, g); err == nil {
+		t.Fatal("expected error for out-of-range index")
+	}
+}
+
 // --- test helpers ---
 
 type fakeState []float64
