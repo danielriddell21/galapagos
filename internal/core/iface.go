@@ -56,12 +56,17 @@ type Agent interface {
 	EndEpisode(totalReward Reward)
 }
 
-// Individual is one member of a population, exposed to the renderer through
-// generic accessors so it can draw and rank members without knowing the
-// concrete agent or environment type.
+// Individual is one member of a population. It carries its own policy so the
+// simulation can drive every member, and exposes fitness and genome through
+// generic accessors so the renderer can rank and highlight members without
+// knowing the concrete agent type.
 type Individual interface {
+	// Act returns the action this member's policy chooses in state s.
+	Act(s State) Action
 	// Fitness returns the member's most recent evaluated fitness.
 	Fitness() Reward
+	// SetFitness records the fitness measured for the member by the simulation.
+	SetFitness(r Reward)
 	// Genome returns the member's parameter vector.
 	Genome() []float64
 }
