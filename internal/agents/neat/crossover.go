@@ -49,10 +49,7 @@ func distance(a, b *genome, c1, c2, c3 float64) float64 {
 		}
 	}
 
-	n := max(len(a.conns), len(b.conns))
-	if n < 1 {
-		n = 1
-	}
+	n := max(max(len(a.conns), len(b.conns)), 1)
 	avgWeight := 0.0
 	if matching > 0 {
 		avgWeight = weightDiff / float64(matching)
