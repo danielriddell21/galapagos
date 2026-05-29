@@ -208,13 +208,15 @@ func (e *Env) SensorEndpoints(i int) (origin core.Vec2, ends []core.Vec2) {
 	return origin, ends
 }
 
-// decode extracts steering and throttle from an action vector.
+// decode extracts steering and throttle from an action vector, squashing the
+// raw control values into their valid ranges: steering via tanh into [-1,1] and
+// throttle via a logistic-style map into [0,1].
 func decode(a core.Action) (steering, throttle float64) {
 	v := a.Vector()
 	if len(v) < 2 {
 		return 0, 0
 	}
-	return v[0], v[1]
+	return math.Tanh(v[0]), (math.Tanh(v[1]) + 1) / 2
 }
 
 // angleOf returns the heading angle of a direction vector.

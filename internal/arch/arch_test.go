@@ -23,6 +23,11 @@ func importsOf(t *testing.T, root string) map[string][]string {
 		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".go") {
 			return err
 		}
+		// The rules constrain the production import graph; integration tests may
+		// freely combine packages.
+		if strings.HasSuffix(path, "_test.go") {
+			return nil
+		}
 		f, perr := parser.ParseFile(fset, path, nil, parser.ImportsOnly)
 		if perr != nil {
 			return perr

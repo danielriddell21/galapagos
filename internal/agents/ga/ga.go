@@ -3,7 +3,6 @@ package ga
 import (
 	"fmt"
 	"iter"
-	"math"
 	"math/rand/v2"
 	"slices"
 
@@ -50,12 +49,11 @@ func newIndividual(cfg Config, genome []float64) *individual {
 	return &individual{genome: genome, net: newNet(cfg.Inputs, cfg.HiddenSize, cfg.Outputs, genome)}
 }
 
-// Act maps the observation through the network to a {steering, throttle} action.
+// Act returns the network's raw outputs as the action vector. Interpretation
+// and clamping are left to the environment, which keeps the agent independent
+// of any particular action semantics.
 func (m *individual) Act(s core.State) core.Action {
-	out := m.net.forward(s.Observation())
-	steering := math.Tanh(out[0])
-	throttle := (math.Tanh(out[1]) + 1) / 2
-	return vecAction{steering, throttle}
+	return vecAction(m.net.forward(s.Observation()))
 }
 
 func (m *individual) Fitness() core.Reward     { return m.fitness }

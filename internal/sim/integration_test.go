@@ -7,6 +7,7 @@ import (
 
 	"github.com/danielriddell21/galapagos/internal/agents/ga"
 	"github.com/danielriddell21/galapagos/internal/core"
+	"github.com/danielriddell21/galapagos/internal/envs/cartpole"
 	"github.com/danielriddell21/galapagos/internal/envs/racing"
 	"github.com/danielriddell21/galapagos/internal/sim"
 )
@@ -80,5 +81,28 @@ func TestHeadlessTrainingReproducible(t *testing.T) {
 	}
 	if a, b := train(1), train(4); !slices.Equal(a, b) {
 		t.Fatal("headless training is not reproducible across worker counts")
+	}
+}
+
+// TestGAonCartpoleUnchanged runs the genetic algorithm on cart-pole through the
+// single-to-multi adapter with no change to the ga package, proving the agent
+// and environment interfaces are decoupled. The evolved best must beat the
+// initial population's best.
+func TestGAonCartpoleUnchanged(t *testing.T) {
+	newEnv := func() core.MultiEnvironment {
+		return sim.AsMulti(func() core.Environment { return cartpole.New(cartpole.DefaultConfig()) })
+	}
+	cfg := ga.Config{
+		Population: 40, EliteFraction: 0.1, MutationRate: 0.1, MutationStd: 0.3,
+		HiddenSize: 6, Inputs: 4, Outputs: 1, Seed: 3,
+	}
+	pop := ga.New(cfg)
+
+	before := slices.Max(sim.EvaluateParallel(newEnv, members(pop), 500, 3))
+	sim.TrainHeadless(newEnv, pop, sim.RunConfig{Seed: 3, MaxSteps: 500, Generations: 15}, nil)
+	after := slices.Max(sim.EvaluateParallel(newEnv, members(pop), 500, 3))
+
+	if after <= before {
+		t.Fatalf("GA did not improve on cart-pole: before=%.0f after=%.0f", before, after)
 	}
 }

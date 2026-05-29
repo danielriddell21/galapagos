@@ -47,7 +47,7 @@ func TestNetForwardShapeAndRange(t *testing.T) {
 	}
 }
 
-func TestActionRanges(t *testing.T) {
+func TestActionShapeAndFinite(t *testing.T) {
 	cfg := testConfig()
 	rng := rand.New(rand.NewPCG(5, 9))
 	m := newIndividual(cfg, randomGenome(GenomeLen(cfg.Inputs, cfg.HiddenSize, cfg.Outputs), rng))
@@ -56,12 +56,16 @@ func TestActionRanges(t *testing.T) {
 		for i := range obs {
 			obs[i] = rng.Float64()
 		}
+		// The agent emits raw outputs (one per network output); the environment
+		// interprets them. They must be finite and correctly shaped.
 		v := m.Act(fakeState(obs)).Vector()
-		if v[0] < -1 || v[0] > 1 {
-			t.Fatalf("steering %g out of [-1,1]", v[0])
+		if len(v) != cfg.Outputs {
+			t.Fatalf("action len = %d, want %d", len(v), cfg.Outputs)
 		}
-		if v[1] < 0 || v[1] > 1 {
-			t.Fatalf("throttle %g out of [0,1]", v[1])
+		for _, x := range v {
+			if math.IsNaN(x) || math.IsInf(x, 0) {
+				t.Fatalf("non-finite action component %g", x)
+			}
 		}
 	}
 }
