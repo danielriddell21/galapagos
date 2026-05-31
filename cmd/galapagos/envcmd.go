@@ -22,7 +22,8 @@ type envParams struct {
 	population  int
 	episodes    int // online agents
 	maxSteps    int
-	qbins       int // q-learning bins per observation dimension
+	qbins       int  // q-learning bins per observation dimension
+	qByState    bool // q-learning keys on the comparable state instead of bins
 }
 
 // runEnv dispatches a single-agent environment to the chosen agent, headless or
@@ -40,6 +41,7 @@ func runEnv(p envParams, log *slog.Logger) error {
 		agent := qlearning.New(qlearning.Config{
 			Bins: p.qbins, Actions: actions, Alpha: 0.3, Gamma: 0.99,
 			Epsilon: 1.0, EpsilonDecay: 0.995, EpsilonMin: 0.01, Seed: p.seed,
+			KeyByState: p.qByState,
 		})
 		if p.headless {
 			rewards := sim.TrainAgent(p.newSingle(), agent, p.episodes, p.maxSteps, p.seed)

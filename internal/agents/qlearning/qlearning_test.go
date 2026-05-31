@@ -42,4 +42,26 @@ func TestTemporalDifferenceUpdate(t *testing.T) {
 	}
 }
 
+// cmpState is a comparable state (an array, not a slice) so it can key the
+// Q-table directly under KeyByState.
+type cmpState [1]float64
+
+func (s cmpState) Observation() []float64 { return s[:] }
+
+func TestKeyByStateSeparatesStates(t *testing.T) {
+	a := New(Config{Actions: 3, KeyByState: true})
+	s1, s2 := cmpState{0.1}, cmpState{0.2}
+	a.values(a.keyOf(s1))[0] = 5
+
+	if a.values(a.keyOf(s2))[0] != 0 {
+		t.Fatal("distinct states must get distinct rows")
+	}
+	if a.values(a.keyOf(s1))[0] != 5 {
+		t.Fatal("the same state must reuse its row")
+	}
+	if a.States() != 2 {
+		t.Fatalf("states seen = %d, want 2", a.States())
+	}
+}
+
 var _ core.Agent = New(DefaultConfig())

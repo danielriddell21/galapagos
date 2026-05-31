@@ -14,7 +14,7 @@ import (
 // Config parameters the agent. Actions is the number of discrete actions the
 // environment accepts; the agent emits the chosen index as the action vector.
 type Config struct {
-	Bins         int     // bins per observation dimension
+	Bins         int     // bins per observation dimension (binned-observation keying)
 	Actions      int     // number of discrete actions
 	Alpha        float64 // learning rate
 	Gamma        float64 // discount factor
@@ -22,6 +22,10 @@ type Config struct {
 	EpsilonDecay float64 // multiplier applied to epsilon each episode
 	EpsilonMin   float64 // floor for epsilon
 	Seed         int64
+	// KeyByState keys the Q-table on the State value itself instead of a binned
+	// observation. The State's concrete type must be comparable (e.g. a cube
+	// position); slice-backed observations (maze, cart-pole) must leave this false.
+	KeyByState bool
 }
 
 // DefaultConfig returns sensible defaults for small discrete tasks.
@@ -47,7 +51,7 @@ func (a vecAction) Vector() []float64 { return []float64{float64(a)} }
 // Agent is a tabular Q-learning learner.
 type Agent struct {
 	cfg     Config
-	q       map[int][]float64
+	q       map[any][]float64
 	rng     *rand.Rand
 	epsilon float64
 }
@@ -56,10 +60,19 @@ type Agent struct {
 func New(cfg Config) *Agent {
 	return &Agent{
 		cfg:     cfg,
-		q:       map[int][]float64{},
+		q:       map[any][]float64{},
 		rng:     rand.New(rand.NewPCG(uint64(cfg.Seed), 0xa1b2c3d4)),
 		epsilon: cfg.Epsilon,
 	}
+}
+
+// keyOf returns the Q-table key for a state: the comparable state value itself
+// when KeyByState is set, otherwise the binned-observation index.
+func (a *Agent) keyOf(s core.State) any {
+	if a.cfg.KeyByState {
+		return s
+	}
+	return a.key(s.Observation())
 }
 
 // key encodes a discretized observation into a single table index using a
@@ -75,7 +88,7 @@ func (a *Agent) key(obs []float64) int {
 }
 
 // values returns the action-value row for a state key, creating it if absent.
-func (a *Agent) values(k int) []float64 {
+func (a *Agent) values(k any) []float64 {
 	row, ok := a.q[k]
 	if !ok {
 		row = make([]float64, a.cfg.Actions)
@@ -89,16 +102,16 @@ func (a *Agent) Act(s core.State) core.Action {
 	if a.rng.Float64() < a.epsilon {
 		return vecAction(a.rng.IntN(a.cfg.Actions))
 	}
-	return vecAction(argmax(a.values(a.key(s.Observation()))))
+	return vecAction(argmax(a.values(a.keyOf(s))))
 }
 
 // Observe applies the temporal-difference update for the taken transition.
 func (a *Agent) Observe(s core.State, act core.Action, r core.Reward, next core.State, done bool) {
 	idx := int(act.Vector()[0] + 0.5)
-	row := a.values(a.key(s.Observation()))
+	row := a.values(a.keyOf(s))
 	target := float64(r)
 	if !done {
-		target += a.cfg.Gamma * slices.Max(a.values(a.key(next.Observation())))
+		target += a.cfg.Gamma * slices.Max(a.values(a.keyOf(next)))
 	}
 	row[idx] += a.cfg.Alpha * (target - row[idx])
 }
