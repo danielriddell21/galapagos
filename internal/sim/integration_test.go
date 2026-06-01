@@ -106,3 +106,10 @@ func TestGAonCartpoleUnchanged(t *testing.T) {
 		t.Fatalf("GA did not improve on cart-pole: before=%.0f after=%.0f", before, after)
 	}
 }
+
+func BenchmarkEvaluateParallel(b *testing.B) {
+	mem := members(ga.New(gaConfig()))
+	for b.Loop() {
+		sim.EvaluateParallel(racingFactory(), mem, itMaxSteps, itSeed)
+	}
+}

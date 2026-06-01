@@ -5,9 +5,37 @@ import (
 
 	"github.com/danielriddell21/galapagos/internal/agents/qlearning"
 	"github.com/danielriddell21/galapagos/internal/core"
+	"github.com/danielriddell21/galapagos/internal/envs/cartpole"
 	"github.com/danielriddell21/galapagos/internal/envs/maze"
 	"github.com/danielriddell21/galapagos/internal/sim"
 )
+
+// TestBalancesCartpole trains tabular Q-learning on cart-pole and requires the
+// balanced duration to grow, showing the agent generalizes to a second discrete
+// task via observation binning.
+func TestBalancesCartpole(t *testing.T) {
+	env := cartpole.New(cartpole.Config{MaxSteps: 500})
+	agent := qlearning.New(qlearning.Config{
+		Bins:         8,
+		Actions:      2,
+		Alpha:        0.1,
+		Gamma:        0.99,
+		Epsilon:      1.0,
+		EpsilonDecay: 0.999,
+		EpsilonMin:   0.01,
+		Seed:         3,
+	})
+
+	rewards := sim.TrainAgent(env, agent, 4000, 500, 1)
+	early := mean(rewards[:200])
+	late := mean(rewards[len(rewards)-200:])
+	if late <= early {
+		t.Fatalf("no improvement: early=%.1f late=%.1f", early, late)
+	}
+	if late < 30 {
+		t.Fatalf("late average balance %.1f too low; agent did not learn", late)
+	}
+}
 
 // TestLearnsMaze trains tabular Q-learning on a fixed maze and requires it to
 // improve and ultimately solve the maze, demonstrating that the Agent interface
