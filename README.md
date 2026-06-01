@@ -5,8 +5,15 @@ flagship demo evolves a population of cars that learn to drive a procedurally
 generated race track.
 
 Environments, agents, and the renderer are decoupled behind small interfaces, so
-any agent can run in any environment. Runs are deterministic: the same seed and
-config always produce the same result.
+any agent can run in any environment. Runs are deterministic from their seed: a
+seed is chosen at random when none is given and logged, and passing `--seed N`
+(or a config seed) reproduces a run exactly.
+
+| environment | ga | neat | qlearning |
+|-------------|----|------|-----------|
+| racing      | ✅ | ✅   | —          |
+| cartpole    | ✅ | ✅   | ✅         |
+| maze        | ✅ | ✅   | ✅         |
 
 ## Build
 
@@ -30,25 +37,29 @@ Replay a saved driver (reproduces the trained result exactly):
 galapagos replay --genome best.json --seed 42
 ```
 
-Other algorithms and environments share the same interfaces:
+Any applicable agent runs on any environment via `--agent`:
 
 ```sh
 galapagos race --headless --config configs/racing-neat.yaml  # NEAT evolves topology
-galapagos cartpole                                           # genetic algorithm balances a pole
-galapagos maze                                               # tabular Q-learning solves a maze
+galapagos cartpole --headless --agent ga                     # GA balances a pole
+galapagos cartpole --headless --agent qlearning              # tabular Q-learning balances a pole
+galapagos maze --headless --agent qlearning                  # Q-learning solves a maze
 ```
 
 ### Windowed demo
 
-The live, watchable demo requires a display and OpenGL and is built with the
-`ebiten` tag:
+Every environment has a live, watchable window (requires a display and OpenGL,
+built with the `ebiten` tag). Drop `--headless` to open it:
 
 ```sh
-just gui            # or: go run -tags ebiten ./cmd/galapagos race --config configs/racing.yaml
+just gui                                       # racing demo
+go run -tags ebiten ./cmd/galapagos cartpole   # cart-pole swarm
+go run -tags ebiten ./cmd/galapagos maze --agent qlearning
 ```
 
-Controls: `space` pause, `f` follow/fit camera, `+`/`-` speed, `r` regenerate
-track, `s` save best, `l` load best, `d` toggle sensor rays.
+The current controls are listed in the window's top-right overlay: `space`
+pause, `f` follow/fit camera, `+`/`-` speed, `r` regenerate (new random seed),
+`s` save best, `l` load best, `d` toggle sensor rays.
 
 For a browser build, `just wasm` compiles the demo to WebAssembly and stages the
 `web/` directory.
