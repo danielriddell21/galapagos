@@ -4,10 +4,7 @@
 // agent.
 package racing
 
-import (
-	"math"
-	"slices"
-)
+import "math"
 
 // vec is the package's 2-D vector type. It is local (not the shared core type)
 // so its literals stay unkeyed without tripping the composites vet check.
@@ -16,7 +13,6 @@ type vec struct{ X, Y float64 }
 func add(a, b vec) vec           { return vec{a.X + b.X, a.Y + b.Y} }
 func sub(a, b vec) vec           { return vec{a.X - b.X, a.Y - b.Y} }
 func scale(a vec, s float64) vec { return vec{a.X * s, a.Y * s} }
-func dot(a, b vec) float64       { return a.X*b.X + a.Y*b.Y }
 func length(a vec) float64       { return math.Hypot(a.X, a.Y) }
 
 // perp returns the left-hand perpendicular of a.
@@ -36,46 +32,6 @@ func normalize(a vec) vec {
 // which is positive when a→b→c turns left.
 func cross(a, b, c vec) float64 {
 	return (b.X-a.X)*(c.Y-a.Y) - (b.Y-a.Y)*(c.X-a.X)
-}
-
-// convexHull returns the convex hull of pts in counter-clockwise order using
-// Andrew's monotone chain. The result has no repeated endpoint.
-func convexHull(pts []vec) []vec {
-	if len(pts) < 3 {
-		return slices.Clone(pts)
-	}
-	p := slices.Clone(pts)
-	slices.SortFunc(p, func(a, b vec) int {
-		if a.X != b.X {
-			return cmp(a.X, b.X)
-		}
-		return cmp(a.Y, b.Y)
-	})
-	build := func(points []vec) []vec {
-		var h []vec
-		for _, pt := range points {
-			for len(h) >= 2 && cross(h[len(h)-2], h[len(h)-1], pt) <= 0 {
-				h = h[:len(h)-1]
-			}
-			h = append(h, pt)
-		}
-		return h[:len(h)-1] // drop last point; it repeats the next chain's start
-	}
-	lower := build(p)
-	slices.Reverse(p)
-	upper := build(p)
-	return append(lower, upper...)
-}
-
-func cmp(a, b float64) int {
-	switch {
-	case a < b:
-		return -1
-	case a > b:
-		return 1
-	default:
-		return 0
-	}
 }
 
 // rayHit returns the distance along a ray (from origin in unit direction dir)
@@ -103,4 +59,24 @@ func segmentsIntersect(p1, p2, p3, p4 vec) bool {
 	d3 := cross(p1, p2, p3)
 	d4 := cross(p1, p2, p4)
 	return ((d1 > 0) != (d2 > 0)) && ((d3 > 0) != (d4 > 0))
+}
+
+// selfIntersects reports whether the closed polyline poly crosses itself. Pairs
+// of segments that share a vertex (adjacent, including across the wrap) are
+// skipped, since they meet by construction rather than truly intersecting.
+func selfIntersects(poly []vec) bool {
+	n := len(poly)
+	for i := range n {
+		a1, a2 := poly[i], poly[(i+1)%n]
+		for j := i + 2; j < n; j++ {
+			if i == 0 && j == n-1 {
+				continue // first and last segments are adjacent across the wrap
+			}
+			b1, b2 := poly[j], poly[(j+1)%n]
+			if segmentsIntersect(a1, a2, b1, b2) {
+				return true
+			}
+		}
+	}
+	return false
 }

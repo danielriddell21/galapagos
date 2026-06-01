@@ -191,6 +191,14 @@ func (e *Env) SetBest(i int) { e.best = i }
 // Track exposes the generated track for camera fitting and inspection.
 func (e *Env) Track() *Track { return e.track }
 
+// Bounds returns the axis-aligned world bounds of the track for camera fitting.
+func (e *Env) Bounds() (minX, minY, maxX, maxY float64) {
+	if e.track == nil {
+		return 0, 0, 0, 0
+	}
+	return e.track.Bounds()
+}
+
 // CarPosition returns the world position of car i, for camera following.
 func (e *Env) CarPosition(i int) core.Vec2 {
 	p := e.bodies[i].pos

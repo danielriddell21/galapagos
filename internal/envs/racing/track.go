@@ -26,10 +26,10 @@ type gate struct {
 
 // TrackParams controls procedural track generation.
 type TrackParams struct {
-	Points      int     // number of random seed points before hulling
-	Radius      float64 // approximate circuit radius
+	Points      int     // number of angular control points around the loop
+	Radius      float64 // base circuit radius
 	Width       float64 // track width
-	Displace    float64 // midpoint displacement magnitude
+	Displace    float64 // radial amplitude as a fraction of the radius
 	SplineSteps int     // samples per control-point span
 	Checkpoints int     // number of progress gates
 }
@@ -37,54 +37,70 @@ type TrackParams struct {
 // DefaultTrackParams returns reasonable generation parameters.
 func DefaultTrackParams() TrackParams {
 	return TrackParams{
-		Points:      12,
+		Points:      16,
 		Radius:      400,
 		Width:       90,
-		Displace:    0.35,
+		Displace:    0.22,
 		SplineSteps: 16,
 		Checkpoints: 24,
 	}
 }
 
-// GenerateTrack builds a deterministic track from rng and params: random points
-// → convex hull → midpoint displacement → Catmull-Rom smoothing → wall offset →
-// checkpoints. The same rng state and params always yield the same track.
+// maxTrackAttempts bounds the deterministic shrink-and-retry loop that
+// guarantees a simple (non-self-intersecting) track.
+const maxTrackAttempts = 8
+
+// GenerateTrack builds a deterministic, simple closed track from rng and params.
+// Control points sit at monotonically increasing angles with smoothed radial
+// noise, making the centerline star-shaped; it is smoothed with a Catmull-Rom
+// spline and inflated into walls. Because spline overshoot can still fold the
+// walls at high amplitude, the angular jitter and radial amplitude are scaled
+// down together and the track rebuilt until it no longer self-intersects, with a
+// perfect circle as the guaranteed-simple fallback. Cars are therefore never
+// boxed in. The same rng state and params always yield the same track.
 func GenerateTrack(rng *rand.Rand, p TrackParams) *Track {
-	// Scatter points in a disc, biased outward so the hull is a fair loop.
-	pts := make([]vec, p.Points)
-	for i := range p.Points {
-		ang := rng.Float64() * 2 * math.Pi
-		r := p.Radius * (0.6 + 0.4*rng.Float64())
-		pts[i] = vec{r * math.Cos(ang), r * math.Sin(ang)}
+	n := max(p.Points, 4)
+	spacing := 2 * math.Pi / float64(n)
+
+	jitter := make([]float64, n)
+	for i := range n {
+		jitter[i] = rng.Float64() - 0.5 // in [-0.5, 0.5]
+	}
+	raw := make([]float64, n)
+	for i := range n {
+		raw[i] = rng.Float64()*2 - 1
+	}
+	noise := make([]float64, n) // smoothed around the ring to avoid spikes
+	for i := range n {
+		noise[i] = (raw[(i-1+n)%n] + 2*raw[i] + raw[(i+1)%n]) / 4
 	}
 
-	hull := convexHull(pts)
-	control := displaceMidpoints(hull, rng, p.Displace)
-	center := catmullClosed(control, p.SplineSteps)
+	build := func(scale float64) *Track {
+		cp := make([]vec, n)
+		for i := range n {
+			ang := spacing*float64(i) + jitter[i]*spacing*0.5*scale
+			// Floor the radius at the width so the inner wall stays clear of center.
+			r := max(p.Radius*(1+p.Displace*noise[i]*scale), p.Width)
+			cp[i] = vec{r * math.Cos(ang), r * math.Sin(ang)}
+		}
+		t := &Track{Center: catmullClosed(cp, p.SplineSteps), Width: p.Width}
+		t.buildWalls()
+		t.buildCheckpoints(p.Checkpoints)
+		t.setStart()
+		return t
+	}
 
-	t := &Track{Center: center, Width: p.Width}
-	t.buildWalls()
-	t.buildCheckpoints(p.Checkpoints)
-	t.setStart()
-	return t
+	for k := range maxTrackAttempts {
+		if t := build(math.Pow(0.7, float64(k))); !t.selfIntersecting() {
+			return t
+		}
+	}
+	return build(0) // a circle is always simple
 }
 
-// displaceMidpoints inserts a perturbed midpoint between each pair of adjacent
-// control points, pushing it along the edge normal to create organic curves.
-func displaceMidpoints(loop []vec, rng *rand.Rand, mag float64) []vec {
-	n := len(loop)
-	out := make([]vec, 0, n*2)
-	for i := range n {
-		a := loop[i]
-		b := loop[(i+1)%n]
-		out = append(out, a)
-		mid := scale(add(a, b), 0.5)
-		edge := sub(b, a)
-		normal := normalize(perp(edge))
-		offset := (rng.Float64()*2 - 1) * mag * length(edge)
-		out = append(out, add(mid, scale(normal, offset)))
-	}
-	return out
+// selfIntersecting reports whether the centerline or either wall crosses itself.
+func (t *Track) selfIntersecting() bool {
+	return selfIntersects(t.Center) || selfIntersects(t.Inner) || selfIntersects(t.Outer)
 }
 
 // catmullClosed samples a closed Catmull-Rom spline through the control points.

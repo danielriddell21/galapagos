@@ -42,14 +42,6 @@ func TestSegmentsIntersect(t *testing.T) {
 	}
 }
 
-func TestConvexHullSquare(t *testing.T) {
-	pts := []vec{{0, 0}, {4, 0}, {4, 4}, {0, 4}, {2, 2}} // interior point ignored
-	hull := convexHull(pts)
-	if len(hull) != 4 {
-		t.Fatalf("hull has %d points, want 4", len(hull))
-	}
-}
-
 func TestGenerateTrackDeterministic(t *testing.T) {
 	p := DefaultTrackParams()
 	a := GenerateTrack(newRNG(), p)
@@ -60,6 +52,49 @@ func TestGenerateTrackDeterministic(t *testing.T) {
 	for i := range a.Center {
 		if a.Center[i] != b.Center[i] {
 			t.Fatalf("centerline differs at %d: %v vs %v", i, a.Center[i], b.Center[i])
+		}
+	}
+}
+
+func TestTrackNeverSelfIntersects(t *testing.T) {
+	// Across many seeds, neither the centerline nor either wall may cross itself;
+	// a self-intersecting track boxes cars in at the start.
+	for seed := range int64(200) {
+		rng := rand.New(rand.NewPCG(uint64(seed), 0x9e37))
+		tr := GenerateTrack(rng, DefaultTrackParams())
+		if selfIntersects(tr.Center) {
+			t.Fatalf("seed %d: centerline self-intersects", seed)
+		}
+		if selfIntersects(tr.Inner) {
+			t.Fatalf("seed %d: inner wall self-intersects", seed)
+		}
+		if selfIntersects(tr.Outer) {
+			t.Fatalf("seed %d: outer wall self-intersects", seed)
+		}
+	}
+}
+
+func TestCarCanMoveFromStart(t *testing.T) {
+	// A car accelerating straight from the start line must survive several steps
+	// and actually move, proving the spawn is not walled in.
+	for seed := range int64(50) {
+		e := New(DefaultConfig())
+		states := e.ResetAll(1, rand.New(rand.NewPCG(uint64(seed), 0x1234)))
+		start := states[0]
+		_ = start
+		moved := false
+		for step := range 10 {
+			_, _, dones := e.StepAll([]core.Action{NewAction(0, 1)})
+			if dones[0] {
+				t.Fatalf("seed %d: car died at step %d right after spawn", seed, step)
+			}
+		}
+		// Position must have changed from the start.
+		if p := e.CarPosition(0); p.X != e.track.StartPos.X || p.Y != e.track.StartPos.Y {
+			moved = true
+		}
+		if !moved {
+			t.Fatalf("seed %d: car did not move from the start line", seed)
 		}
 	}
 }
