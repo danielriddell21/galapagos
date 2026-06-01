@@ -1,13 +1,71 @@
 package main
 
 import (
+	"fmt"
+	"log/slog"
+	"math/rand/v2"
+
 	"github.com/danielriddell21/galapagos/internal/agents/ga"
 	"github.com/danielriddell21/galapagos/internal/agents/neat"
 	"github.com/danielriddell21/galapagos/internal/config"
 	"github.com/danielriddell21/galapagos/internal/core"
 	"github.com/danielriddell21/galapagos/internal/envs/racing"
 	"github.com/danielriddell21/galapagos/internal/sim"
+	"github.com/spf13/cobra"
 )
+
+// keymaps shown in the GUI's top-right overlay, per kind of run.
+var (
+	racingKeymap = []string{"space pause", "f follow", "+/- speed", "r new track", "d rays", "s save", "l load"}
+	swarmKeymap  = []string{"space pause", "+/- speed", "r regenerate"}
+	onlineKeymap = []string{"space pause", "+/- speed", "r regenerate"}
+)
+
+// resolveSeed chooses the run seed: an explicit --seed wins; otherwise a
+// non-zero config seed; otherwise a fresh random seed. The chosen seed is always
+// logged so a random run can be reproduced with --seed.
+func resolveSeed(cmd *cobra.Command, configSeed int64, log *slog.Logger) int64 {
+	var seed int64
+	switch {
+	case cmd.Flags().Changed("seed"):
+		seed, _ = cmd.Flags().GetInt64("seed")
+	case configSeed != 0:
+		seed = configSeed
+	default:
+		seed = int64(rand.Uint64() >> 1) // random, non-negative
+	}
+	log.Info("seed", "value", seed)
+	return seed
+}
+
+// randomSeed returns a fresh non-negative seed, used by the GUI 'r' control.
+func randomSeed() int64 { return int64(rand.Uint64() >> 1) }
+
+// discreteCount returns the number of discrete actions described by a spec, or 0
+// when the action is continuous.
+func discreteCount(s core.Spec) int {
+	if !s.Discrete || len(s.High) == 0 {
+		return 0
+	}
+	return int(s.High[0]-s.Low[0]) + 1
+}
+
+// newPopulationAgent builds GA or NEAT sized to an environment's specs.
+func newPopulationAgent(name string, obs, act core.Spec, population int, seed int64) (core.PopulationAgent, error) {
+	switch name {
+	case "ga":
+		return ga.New(ga.Config{
+			Population: population, EliteFraction: 0.1, MutationRate: 0.05, MutationStd: 0.2,
+			HiddenSize: 8, Inputs: obs.Dim, Outputs: act.Dim, Seed: seed,
+		}), nil
+	case "neat":
+		nc := neat.DefaultConfig()
+		nc.Population, nc.Inputs, nc.Outputs, nc.Seed = population, obs.Dim, act.Dim, seed
+		return neat.New(nc), nil
+	default:
+		return nil, fmt.Errorf("unknown population agent %q (want ga or neat)", name)
+	}
+}
 
 // gaConfigFrom builds the genetic-algorithm config from the run config. The
 // network input size is the ray count plus one for normalized speed; the output

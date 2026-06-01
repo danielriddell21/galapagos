@@ -37,7 +37,7 @@ func DefaultRacing() Racing {
 		Rays:          7,
 		MaxSteps:      2000,
 		Generations:   200,
-		Seed:          42,
+		Seed:          0, // 0 means "unset": the command picks and logs a random seed
 	}
 }
 

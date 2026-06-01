@@ -140,6 +140,13 @@ func (e *Env) ObservationSpec() core.Spec {
 // Solved reports whether the agent has reached the goal.
 func (e *Env) Solved() bool { return e.x == e.cfg.Width-1 && e.y == e.cfg.Height-1 }
 
+// Bounds returns the world bounds of the maze drawing for camera fitting. It
+// matches the cell size used by Render.
+func (e *Env) Bounds() (minX, minY, maxX, maxY float64) {
+	const s = 32.0
+	return 0, 0, float64(e.cfg.Width) * s, float64(e.cfg.Height) * s
+}
+
 var _ core.Environment = (*Env)(nil)
 
 // direction maps an action vector to a direction index in [0,3].

@@ -100,10 +100,18 @@ func (e *Env) observe() core.State {
 	}}
 }
 
-// ActionSpec implements core.Environment: a single value whose sign selects the
-// push direction.
+// ActionSpec implements core.Environment: one value selecting the push
+// direction. The discrete bounds [0,1] mean two actions (left, right); Step
+// pushes right when the value is positive.
 func (e *Env) ActionSpec() core.Spec {
-	return core.Spec{Dim: 1, Low: []float64{-1}, High: []float64{1}, Discrete: true}
+	return core.Spec{Dim: 1, Low: []float64{0}, High: []float64{1}, Discrete: true}
+}
+
+// Bounds returns the world bounds of the cart-and-rail drawing for camera
+// fitting.
+func (e *Env) Bounds() (minX, minY, maxX, maxY float64) {
+	const scale = 100
+	return -xThreshold * scale, -1.2 * scale, xThreshold * scale, 0.4 * scale
 }
 
 // ObservationSpec implements core.Environment.

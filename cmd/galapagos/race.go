@@ -7,6 +7,8 @@ import (
 
 	"github.com/danielriddell21/galapagos/internal/agents/ga"
 	"github.com/danielriddell21/galapagos/internal/config"
+	"github.com/danielriddell21/galapagos/internal/core"
+	"github.com/danielriddell21/galapagos/internal/envs/racing"
 	"github.com/danielriddell21/galapagos/internal/sim"
 	"github.com/spf13/cobra"
 )
@@ -22,6 +24,7 @@ func init() {
 		Use:   "race",
 		Short: "Evolve a population of cars on a procedural track",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			log := slog.New(slog.NewTextHandler(os.Stderr, nil))
 			cfg := config.DefaultRacing()
 			if cfgPath != "" {
 				loaded, err := config.LoadRacing(cfgPath)
@@ -30,33 +33,27 @@ func init() {
 				}
 				cfg = loaded
 			}
-			if cmd.Flags().Changed("seed") {
-				cfg.Seed = seed
+			if cfg.Agent == "qlearning" {
+				return fmt.Errorf("racing uses continuous control; choose agent ga or neat (qlearning runs on cartpole and maze)")
 			}
+			cfg.Seed = resolveSeed(cmd, cfg.Seed, log)
 			if headless {
-				return runHeadless(cfg, out)
+				return raceHeadless(cfg, out, log)
 			}
-			if cfg.Agent == "neat" {
-				return fmt.Errorf("the windowed demo runs the genetic algorithm; use --headless to train with neat")
-			}
-			return launchGUI(cfg, out)
+			return raceGUI(cfg, out, log)
 		},
 	}
 	cmd.Flags().StringVar(&cfgPath, "config", "", "path to a YAML config (defaults built in)")
 	cmd.Flags().BoolVar(&headless, "headless", false, "train without a window, then save the best genome")
 	cmd.Flags().StringVar(&out, "out", "best.json", "path to save the best genome")
-	cmd.Flags().Int64Var(&seed, "seed", cfg().Seed, "override the config seed")
+	cmd.Flags().Int64Var(&seed, "seed", 0, "run seed (default: random, logged)")
 	rootCmd.AddCommand(cmd)
 }
 
-// cfg is a tiny helper so the flag default reflects the built-in seed.
-func cfg() config.Racing { return config.DefaultRacing() }
-
-// runHeadless evolves the population at full speed with no rendering. For the
+// raceHeadless evolves the population at full speed with no rendering. For the
 // genetic algorithm it also saves the best genome, which can be replayed; NEAT
 // genomes carry topology and are not yet serializable.
-func runHeadless(c config.Racing, out string) error {
-	log := slog.New(slog.NewTextHandler(os.Stderr, nil))
+func raceHeadless(c config.Racing, out string, log *slog.Logger) error {
 	agent := buildAgent(c)
 	rc := racingConfigFrom(c)
 	tel := sim.NewTelemetry(c.Generations, log)
@@ -75,4 +72,36 @@ func runHeadless(c config.Racing, out string) error {
 		fmt.Printf("saved best genome to %s\n", out)
 	}
 	return nil
+}
+
+// raceGUI opens the windowed racing demo with the whole population on one track.
+func raceGUI(c config.Racing, out string, log *slog.Logger) error {
+	env := racing.New(racingConfigFrom(c))
+	agent := buildAgent(c)
+
+	caps := runCaps{
+		keymap: racingKeymap,
+		bounds: boundsOf(env),
+		leader: func(best int) (float64, float64, bool) {
+			p := env.CarPosition(best)
+			return p.X, p.Y, true
+		},
+		sensors: func(best int) (core.Vec2, []core.Vec2, bool) {
+			o, ends := env.SensorEndpoints(best)
+			return o, ends, true
+		},
+	}
+	if gp, ok := agent.(*ga.Population); ok {
+		caps.save = func() error { return gp.SaveBest(out) }
+		caps.load = func() error {
+			sg, err := ga.LoadGenome(out)
+			if err != nil {
+				return err
+			}
+			return gp.SetMemberGenome(0, sg.Genome)
+		}
+	}
+
+	run := populationGUI("Galapagos — race ("+c.Agent+")", env, agent, c.MaxSteps, c.Seed, caps)
+	return launchGUI(run, log)
 }

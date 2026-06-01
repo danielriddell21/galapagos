@@ -27,12 +27,14 @@ func (m *multiAdapter) ResetAll(n int, rng *rand.Rand) []core.State {
 	m.bodies = make([]core.Environment, n)
 	m.done = make([]bool, n)
 	m.alive = n
+	// All bodies share one task instance, like the racing population shares one
+	// track: every body resets from the same derived seed, so members are scored
+	// on identical conditions and the swarm is coherent to watch.
+	task := rng.Uint64()
 	states := make([]core.State, n)
 	for i := range n {
 		m.bodies[i] = m.make()
-		// Each body gets its own derived stream so layouts are reproducible and
-		// independent across bodies.
-		states[i] = m.bodies[i].Reset(rand.New(rand.NewPCG(rng.Uint64(), uint64(i))))
+		states[i] = m.bodies[i].Reset(rand.New(rand.NewPCG(task, 0)))
 	}
 	return states
 }
@@ -65,6 +67,25 @@ func (m *multiAdapter) Render(r core.Renderer) {
 			env.Render(r)
 		}
 	}
+}
+
+// Bounds forwards the world bounds of a representative body, so a population
+// running on an adapted single-agent environment can still fit the camera. It
+// reports false when the underlying environment does not expose bounds.
+func (m *multiAdapter) Bounds() (minX, minY, maxX, maxY float64, ok bool) {
+	var probe core.Environment
+	if len(m.bodies) > 0 {
+		probe = m.bodies[0]
+	} else {
+		probe = m.make()
+	}
+	if b, has := probe.(interface {
+		Bounds() (float64, float64, float64, float64)
+	}); has {
+		minX, minY, maxX, maxY = b.Bounds()
+		return minX, minY, maxX, maxY, true
+	}
+	return 0, 0, 0, 0, false
 }
 
 var _ core.MultiEnvironment = (*multiAdapter)(nil)
