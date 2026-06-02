@@ -1,5 +1,11 @@
 # Galapagos
 
+[![CI](https://github.com/danielriddell21/galapagos/actions/workflows/ci.yaml/badge.svg)](https://github.com/danielriddell21/galapagos/actions/workflows/ci.yaml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=danielriddell21_galapagos&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=danielriddell21_galapagos)
+[![codecov](https://codecov.io/gh/danielriddell21/galapagos/graph/badge.svg)](https://codecov.io/gh/danielriddell21/galapagos)
+[![Go 1.26](https://img.shields.io/badge/go-1.26-blue)](https://go.dev)
+[![MIT License](https://img.shields.io/badge/licence-MIT-green)](LICENSE)
+
 A pluggable Go framework for visualizing learning algorithms in real time. The
 flagship demo evolves a population of cars that learn to drive a procedurally
 generated race track.
@@ -14,6 +20,13 @@ seed is chosen at random when none is given and logged, and passing `--seed N`
 | racing      | ✅ | ✅   | —          |
 | cartpole    | ✅ | ✅   | ✅         |
 | maze        | ✅ | ✅   | ✅         |
+
+## Install
+
+### Homebrew
+```bash
+brew install danielriddell21/tap/galapagos
+```
 
 ## Build
 
