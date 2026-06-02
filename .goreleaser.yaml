@@ -31,14 +31,32 @@ archives:
 checksum:
   name_template: checksums.txt
 
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - Merge pull request
+      - Merge branch
+
+release:
+  name_template: "v{{ .Version }}"
+
 brews:
   - name: galapagos
     repository:
       owner: danielriddell21
       name: homebrew-tap
+      branch: trunk
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    directory: Formula
     homepage: https://github.com/danielriddell21/galapagos
     description: Visualize learning algorithms in real time
     license: MIT
-
-release:
-  draft: true
+    commit_msg_template: "Brew formula update for galapagos {{ .Tag }}"
+    install: |
+      bin.install "galapagos"
+    test: |
+      system "#{bin}/galapagos", "--version"
