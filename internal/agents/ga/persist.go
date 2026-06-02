@@ -73,9 +73,16 @@ func NewDriver(sg SavedGenome) *Driver {
 	return &Driver{ind: newIndividual(cfg, sg.Genome)}
 }
 
+// Act returns the action the driver takes in the given state.
 func (d *Driver) Act(s core.State) core.Action { return d.ind.Act(s) }
-func (d *Driver) Fitness() core.Reward         { return d.ind.Fitness() }
-func (d *Driver) SetFitness(r core.Reward)     { d.ind.SetFitness(r) }
-func (d *Driver) Genome() []float64            { return d.ind.Genome() }
+
+// Fitness returns the driver's current fitness.
+func (d *Driver) Fitness() core.Reward { return d.ind.Fitness() }
+
+// SetFitness sets the driver's fitness.
+func (d *Driver) SetFitness(r core.Reward) { d.ind.SetFitness(r) }
+
+// Genome returns the driver's underlying genome.
+func (d *Driver) Genome() []float64 { return d.ind.Genome() }
 
 var _ core.Individual = (*Driver)(nil)

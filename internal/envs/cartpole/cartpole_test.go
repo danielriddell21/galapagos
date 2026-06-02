@@ -51,10 +51,10 @@ func TestPoleFallsWithConstantForce(t *testing.T) {
 func TestDeterministicTrajectory(t *testing.T) {
 	run := func() []float64 {
 		e := New(DefaultConfig())
-		s := e.Reset(newRNG())
+		e.Reset(newRNG())
 		var trace []float64
 		for range 50 {
-			s, _, _ = e.Step(act(1))
+			s, _, _ := e.Step(act(1))
 			trace = append(trace, s.Observation()...)
 		}
 		return trace

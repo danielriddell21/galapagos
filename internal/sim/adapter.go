@@ -19,8 +19,8 @@ type multiAdapter struct {
 // AsMulti adapts a single-agent environment constructor into a MultiEnvironment.
 // Each body is an independent environment instance, mirroring the per-member
 // rollout used for the racing population so the determinism guarantees hold.
-func AsMulti(make func() core.Environment) core.MultiEnvironment {
-	return &multiAdapter{make: make}
+func AsMulti(mk func() core.Environment) core.MultiEnvironment {
+	return &multiAdapter{make: mk}
 }
 
 func (m *multiAdapter) ResetAll(n int, rng *rand.Rand) []core.State {

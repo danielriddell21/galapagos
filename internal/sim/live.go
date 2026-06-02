@@ -101,5 +101,5 @@ func (l *Live) BestIndex() int {
 // Fitness returns the current accumulated fitness per member.
 func (l *Live) Fitness() []float64 { return l.fitness }
 
-// Step number within the current generation.
+// StepCount returns the step number within the current generation.
 func (l *Live) StepCount() int { return l.step }

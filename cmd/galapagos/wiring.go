@@ -38,9 +38,6 @@ func resolveSeed(cmd *cobra.Command, configSeed int64, log *slog.Logger) int64 {
 	return seed
 }
 
-// randomSeed returns a fresh non-negative seed, used by the GUI 'r' control.
-func randomSeed() int64 { return int64(rand.Uint64() >> 1) }
-
 // discreteCount returns the number of discrete actions described by a spec, or 0
 // when the action is continuous.
 func discreteCount(s core.Spec) int {

@@ -84,16 +84,6 @@ func (g *genome) clone() *genome {
 	}
 }
 
-// nodeID returns the maximum node id in the genome, used when allocating new
-// hidden nodes.
-func (g *genome) maxNodeID() int {
-	m := 0
-	for _, n := range g.nodes {
-		m = max(m, n.id)
-	}
-	return m
-}
-
 // hasNode reports whether a node with id exists.
 func (g *genome) hasNode(id int) bool {
 	for _, n := range g.nodes {
