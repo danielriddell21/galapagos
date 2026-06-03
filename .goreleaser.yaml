@@ -1,32 +1,59 @@
 version: 2
 
-# Galapagos releases the headless binary, which has no display dependencies and
-# cross-compiles cleanly. The windowed demo is built locally with `make gui` or
-# for the browser with `make wasm`.
+# Galapagos ships two ways:
+#   * a cross-platform, dependency-free CLI (Homebrew formula) that includes the
+#     browser demo via `galapagos serve`; and
+#   * a macOS-only native window (Homebrew cask) built with the Ebiten/Metal
+#     backend, which needs no extra system libraries on macOS.
+# Release from a macOS runner so the cgo darwin build can link Metal; the
+# formula targets (CGO-free) cross-compile from the same runner.
+
 before:
   hooks:
     - go mod tidy
+    # Build the WebAssembly demo so both binaries embed it for `galapagos serve`.
+    - sh -c "GOOS=js GOARCH=wasm go build -tags ebiten -o internal/webui/web/galapagos.wasm ./cmd/galapagos"
+    - sh -c 'cp "$(go env GOROOT)/lib/wasm/wasm_exec.js" internal/webui/web/wasm_exec.js'
 
 builds:
-  - id: galapagos
+  # Cross-platform headless CLI: no cgo, no display libraries. Embeds the browser
+  # demo, so `galapagos serve` works everywhere.
+  - id: headless
     main: ./cmd/galapagos
     binary: galapagos
     env:
       - CGO_ENABLED=0
-    goos:
-      - linux
-      - darwin
-      - windows
-    goarch:
-      - amd64
-      - arm64
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+
+  # macOS native window: Ebiten on Metal (no extra deps). Requires cgo and a
+  # macOS toolchain, so it is darwin-only.
+  - id: gui
+    main: ./cmd/galapagos
+    binary: galapagos
+    env:
+      - CGO_ENABLED=1
+    flags:
+      - -tags=ebiten
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+    goos: [darwin]
+    goarch: [amd64, arm64]
 
 archives:
-  - id: galapagos
+  - id: headless
+    ids: [headless]
+    name_template: "galapagos_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     formats: [tar.gz]
     format_overrides:
       - goos: windows
         formats: [zip]
+  - id: gui
+    ids: [gui]
+    name_template: "galapagos-gui_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    formats: [tar.gz]
 
 checksum:
   name_template: checksums.txt
@@ -44,8 +71,11 @@ changelog:
 release:
   name_template: "v{{ .Version }}"
 
+# Homebrew formula: the cross-platform headless CLI (macOS + Linux). The browser
+# demo rides along; run `galapagos serve`.
 brews:
   - name: galapagos
+    ids: [headless]
     repository:
       owner: danielriddell21
       name: homebrew-tap
@@ -53,10 +83,28 @@ brews:
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     directory: Formula
     homepage: https://github.com/danielriddell21/galapagos
-    description: Visualize learning algorithms in real time
+    description: Visualize learning algorithms in real time (CLI + browser demo)
     license: MIT
     commit_msg_template: "Brew formula update for galapagos {{ .Tag }}"
     install: |
       bin.install "galapagos"
     test: |
       system "#{bin}/galapagos", "--version"
+
+# Homebrew cask: the macOS native window (Ebiten/Metal). It is a superset — it
+# also serves the browser demo and runs every CLI command.
+homebrew_casks:
+  - name: galapagos
+    ids: [gui]
+    repository:
+      owner: danielriddell21
+      name: homebrew-tap
+      branch: trunk
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: https://github.com/danielriddell21/galapagos
+    description: Visualize learning algorithms in real time (native macOS window + browser demo)
+    license: MIT
+    caveats: |
+      The native window uses Metal and is macOS-only; it also runs every CLI
+      command and `galapagos serve` for the browser demo. On Linux or Windows,
+      install the formula instead and run `galapagos serve`.

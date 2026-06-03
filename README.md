@@ -23,10 +23,22 @@ seed is chosen at random when none is given and logged, and passing `--seed N`
 
 ## Install
 
-### Homebrew
+On macOS, the Homebrew **cask** installs the full binary — the native window plus
+every CLI command and the browser demo:
+
+```bash
+brew install --cask danielriddell21/tap/galapagos
+```
+
+On Linux (or macOS without the native window), the Homebrew **formula** installs
+the cross-platform CLI; the browser demo rides along via `galapagos serve`:
+
 ```bash
 brew install danielriddell21/tap/galapagos
 ```
+
+The native window is macOS-only (it uses Metal, which needs no extra libraries).
+On any platform, `galapagos serve` opens the WebAssembly demo in your browser.
 
 ## Build
 
@@ -73,6 +85,12 @@ go run -tags ebiten ./cmd/galapagos maze --agent qlearning
 The current controls are listed in the window's top-right overlay: `space`
 pause, `f` follow/fit camera, `+`/`-` speed, `r` regenerate (new random seed),
 `s` save best, `l` load best, `d` toggle sensor rays.
+
+### Browser demo
+
+The same window compiled to WebAssembly runs in a browser, so no native graphics
+libraries are needed. The binary embeds it; `galapagos serve` (or `just serve`)
+hosts it and opens a browser.
 
 For a browser build, `just wasm` compiles the demo to WebAssembly and stages the
 `web/` directory.
