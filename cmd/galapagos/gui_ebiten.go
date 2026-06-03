@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image/color"
 	"log/slog"
+	"math/rand/v2"
 	"time"
 
 	eb "github.com/hajimehoshi/ebiten/v2"
@@ -14,6 +15,9 @@ import (
 	"github.com/danielriddell21/galapagos/internal/core"
 	ebrender "github.com/danielriddell21/galapagos/internal/render/ebiten"
 )
+
+// randomSeed returns a fresh non-negative seed for the GUI's regenerate control.
+func randomSeed() int64 { return int64(rand.Uint64() >> 1) }
 
 const (
 	screenW = 1024
