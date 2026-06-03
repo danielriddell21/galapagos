@@ -12,8 +12,12 @@ test:
 gui:
     go run -tags ebiten ./cmd/galapagos race --config configs/racing.yaml
 
-# Browser build: compiles the windowed demo to WebAssembly and stages web assets.
+# Browser demo: compile the windowed demo to WebAssembly into the webui package,
+# so it is embedded into the binary and served by `galapagos serve`.
 wasm:
-    GOOS=js GOARCH=wasm go build -tags ebiten -o web/galapagos.wasm ./cmd/galapagos
-    cp "$(go env GOROOT)/lib/wasm/wasm_exec.js" web/wasm_exec.js
-    @echo "serve the web/ directory and open index.html"
+    GOOS=js GOARCH=wasm go build -tags ebiten -o internal/webui/web/galapagos.wasm ./cmd/galapagos
+    cp "$(go env GOROOT)/lib/wasm/wasm_exec.js" internal/webui/web/wasm_exec.js
+
+# Build the browser demo, then serve it.
+serve: wasm
+    go run ./cmd/galapagos serve

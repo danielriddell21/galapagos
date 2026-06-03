@@ -1,7 +1,7 @@
 # Build artifacts
 /galapagos
 *.wasm
-web/wasm_exec.js
+internal/webui/web/wasm_exec.js
 
 # Saved genomes produced by training/replay
 best.json
