@@ -11,7 +11,9 @@ permissions:
 jobs:
   release:
     name: GoReleaser
-    runs-on: ubuntu-latest
+    # macOS runner: required for the cgo/Metal darwin GUI build (the Homebrew
+    # cask). The CGO-free Linux/Windows formula binaries cross-compile here too.
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v6
         with:
