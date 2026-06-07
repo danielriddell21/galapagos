@@ -57,9 +57,12 @@ func (r *recorder) save(path string) error {
 	if err != nil {
 		return fmt.Errorf("recorder: create %q: %w", path, err)
 	}
-	defer f.Close()
 	if err := gif.EncodeAll(f, &gif.GIF{Image: r.frames, Delay: delays}); err != nil {
+		_ = f.Close()
 		return fmt.Errorf("recorder: encode %q: %w", path, err)
+	}
+	if err := f.Close(); err != nil {
+		return fmt.Errorf("recorder: close %q: %w", path, err)
 	}
 	return nil
 }
