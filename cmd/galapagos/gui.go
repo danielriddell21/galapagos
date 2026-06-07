@@ -35,13 +35,12 @@ type guiRun struct {
 // runCaps holds the environment-specific capabilities a command supplies when
 // assembling a run.
 type runCaps struct {
-	keymap   []string
-	bounds   func() (minX, minY, maxX, maxY float64, ok bool)
-	leader   func(best int) (x, y float64, ok bool)
-	sensors  func(best int) (origin core.Vec2, ends []core.Vec2, ok bool)
-	save     func() error
-	load     func() error
-	extraHUD func() []string // optional extra HUD lines (online runs)
+	keymap  []string
+	bounds  func() (minX, minY, maxX, maxY float64, ok bool)
+	leader  func(best int) (x, y float64, ok bool)
+	sensors func(best int) (origin core.Vec2, ends []core.Vec2, ok bool)
+	save    func() error
+	load    func() error
 }
 
 // populationGUI assembles a run that evolves a population on a multi-environment,
@@ -96,15 +95,11 @@ func onlineGUI(title string, env core.Environment, agent core.Agent, maxSteps in
 		next:     ep.NextEpisode,
 		render:   func(r core.Renderer) { env.Render(r) },
 		hud: func() []string {
-			lines := []string{
+			return []string{
 				fmt.Sprintf("episode %d", ep.Episode()),
 				fmt.Sprintf("step %d", ep.StepCount()),
 				fmt.Sprintf("return %.2f", float64(ep.Return())),
 			}
-			if caps.extraHUD != nil {
-				lines = append(lines, caps.extraHUD()...)
-			}
-			return lines
 		},
 		series:     func() []float64 { return returns },
 		bounds:     caps.bounds,

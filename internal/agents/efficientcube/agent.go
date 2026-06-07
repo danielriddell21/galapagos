@@ -53,12 +53,6 @@ func (a *Agent) Observe(s core.State, act core.Action, r core.Reward, next core.
 // EndEpisode resets so the next episode re-plans.
 func (a *Agent) EndEpisode(total core.Reward) { a.planned = false; a.plan = nil; a.idx = 0 }
 
-// SolutionLen returns the number of moves in the current plan (0 until planned).
-func (a *Agent) SolutionLen() int { return len(a.plan) }
-
-// Move returns the index of the move about to be played (for HUD progress).
-func (a *Agent) Move() int { return a.idx }
-
 // cubeFromObservation rebuilds the cube from the env's normalized facelet
 // observation (each component is color/5, exactly invertible).
 func cubeFromObservation(obs []float64) rubix.Cube {

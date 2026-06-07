@@ -3,16 +3,18 @@ package main
 import (
 	"fmt"
 	"log/slog"
+	"math"
 	"os"
 	"time"
 
 	"github.com/danielriddell21/galapagos/internal/agents/efficientcube"
+	"github.com/danielriddell21/galapagos/internal/core"
 	"github.com/danielriddell21/galapagos/internal/envs/cube"
 	rubix "github.com/danielriddell21/rubix/pkg/cube"
 	"github.com/spf13/cobra"
 )
 
-var cubeKeymap = []string{"space pause", "+/- speed", "r new scramble"}
+var cubeKeymap = []string{"space pause", "+/- speed", "r new scrambles"}
 
 func init() {
 	var (
@@ -31,14 +33,14 @@ func init() {
 		maxDepth int
 		// run
 		guiDepth int
-		maxSteps int
+		cubes    int
 		seed     int64
 		headless bool
 	)
 	cmd := &cobra.Command{
 		Use:   "cube",
 		Short: "Learn to solve a Rubik's cube with EfficientCube (self-supervised policy + beam search)",
-		Long:  "Trains an EfficientCube policy by self-supervision (predicting the move that reverses each scramble step), then solves scrambles with beam search. The window shows the learned policy turning the cube toward solved.",
+		Long:  "Trains an EfficientCube policy by self-supervision (predicting the move that reverses each scramble step), then solves scrambles with beam search. The window shows a cube being solved.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			log := slog.New(slog.NewTextHandler(os.Stderr, nil))
 			seed = resolveSeed(cmd, 0, log)
@@ -55,7 +57,7 @@ func init() {
 				reportCubeEval(policy, evalDep, evalN, beam, seed)
 				return nil
 			}
-			return cubeGUI(policy, beam, guiDepth, maxSteps, seed, log)
+			return cubeWall(policy, beam, cubes, guiDepth, seed, log)
 		},
 	}
 	cmd.Flags().IntVar(&iters, "iters", 2000, "training iterations")
@@ -70,7 +72,7 @@ func init() {
 	cmd.Flags().IntVar(&beamW, "beam-width", 200, "beam search width")
 	cmd.Flags().IntVar(&maxDepth, "max-depth", 18, "maximum solution length searched")
 	cmd.Flags().IntVar(&guiDepth, "scramble", 6, "scramble depth shown in the window")
-	cmd.Flags().IntVar(&maxSteps, "max-steps", 40, "maximum moves per episode in the window")
+	cmd.Flags().IntVar(&cubes, "cubes", 1, "number of cubes solved in parallel in the window")
 	cmd.Flags().Int64Var(&seed, "seed", 0, "run seed (default: random, logged)")
 	cmd.Flags().BoolVar(&headless, "headless", false, "train and evaluate without a window")
 	rootCmd.AddCommand(cmd)
@@ -96,42 +98,123 @@ func loadOrTrainPolicy(model string, train bool, cfg efficientcube.TrainConfig, 
 	return p, nil
 }
 
-// reportCubeEval beam-solves N scrambles at the given depth and prints aggregate
-// statistics.
+// reportCubeEval beam-solves N scrambles in parallel and prints aggregate stats.
 func reportCubeEval(p *efficientcube.Policy, depth, n int, beam efficientcube.BeamConfig, seed int64) {
-	start := time.Now()
-	solved, totLen, totNodes := 0, 0, 0
+	scrambles := make([]rubix.Cube, n)
 	for i := range n {
-		c := rubix.ScrambledCube(depth, seed+int64(i))
-		res := p.Solve(c, beam)
-		if res.Solved {
+		scrambles[i] = rubix.ScrambledCube(depth, seed+int64(i))
+	}
+	start := time.Now()
+	results := p.SolveBatch(scrambles, beam)
+	elapsed := time.Since(start)
+
+	solved, totLen, totNodes := 0, 0, 0
+	for _, r := range results {
+		if r.Solved {
 			solved++
-			totLen += len(res.Moves)
+			totLen += len(r.Moves)
 		}
-		totNodes += res.Nodes
+		totNodes += r.Nodes
 	}
 	avgLen := 0.0
 	if solved > 0 {
 		avgLen = float64(totLen) / float64(solved)
 	}
 	fmt.Printf("depth %d: solved %d/%d (%.0f%%), avg length %.1f, avg nodes %d, %s\n",
-		depth, solved, n, 100*float64(solved)/float64(n), avgLen, totNodes/n, time.Since(start).Round(time.Millisecond))
+		depth, solved, n, 100*float64(solved)/float64(n), avgLen, totNodes/n, elapsed.Round(time.Millisecond))
 }
 
-// cubeGUI opens the window where the beam-search solution turns the cube to
-// solved, one move per frame.
-func cubeGUI(p *efficientcube.Policy, beam efficientcube.BeamConfig, depth, maxSteps int, seed int64, log *slog.Logger) error {
-	env := cube.New(cube.Config{ScrambleDepth: depth, MaxSteps: maxSteps})
-	agent := efficientcube.NewAgent(p, beam)
-	caps := runCaps{
+// cubeWall opens a window showing a grid of cubes being solved in parallel: the
+// solutions are computed concurrently with SolveBatch, then animated together.
+func cubeWall(p *efficientcube.Policy, beam efficientcube.BeamConfig, count, depth int, seed int64, log *slog.Logger) error {
+	const gap = cube.NetW * 0.15
+	cols := int(math.Ceil(math.Sqrt(float64(count))))
+	rows := (count + cols - 1) / cols
+
+	states := make([]rubix.Cube, count)
+	plans := make([][]rubix.Move, count)
+	idx := make([]int, count)
+	cur := seed
+	hold := 0
+	frac := 0.0
+	const turnFrames = 6 // frames to animate one move's rotation
+
+	generate := func(s int64) {
+		cur = s
+		for i := range count {
+			states[i] = rubix.ScrambledCube(depth, s+int64(i))
+		}
+		for i, res := range p.SolveBatch(states, beam) {
+			plans[i] = res.Moves
+			idx[i] = 0
+		}
+		hold = 0
+		frac = 0
+	}
+	generate(seed)
+
+	solvedCount := func() int {
+		k := 0
+		for i := range count {
+			if states[i].IsSolved() {
+				k++
+			}
+		}
+		return k
+	}
+
+	run := guiRun{
+		title:  "Galapagos — cube (efficientcube)",
 		keymap: cubeKeymap,
-		bounds: boundsOf(env),
-		extraHUD: func() []string {
-			return []string{
-				fmt.Sprintf("beam width %d", beam.Width),
-				fmt.Sprintf("solution %d/%d", agent.Move(), agent.SolutionLen()),
+		step: func() bool {
+			pending := false
+			for i := range count {
+				if !states[i].IsSolved() && idx[i] < len(plans[i]) {
+					pending = true
+				}
+			}
+			if pending {
+				// Advance the shared turn animation; apply the moves when it completes.
+				if frac += 1.0 / turnFrames; frac >= 1 {
+					frac = 0
+					for i := range count {
+						if !states[i].IsSolved() && idx[i] < len(plans[i]) {
+							states[i] = states[i].Applied(plans[i][idx[i]])
+							idx[i]++
+						}
+					}
+				}
+				return false
+			}
+			// All cubes finished; hold the solved cubes briefly before the next batch.
+			hold++
+			return hold >= 45
+		},
+		next: func() { generate(cur + int64(count)) },
+		render: func(r core.Renderer) {
+			for i := range count {
+				ox := float64(i%cols) * (cube.NetW + gap)
+				oy := float64(i/cols) * (cube.NetH + gap)
+				turn, f := rubix.Move(0), 0.0
+				if !states[i].IsSolved() && idx[i] < len(plans[i]) {
+					turn, f = plans[i][idx[i]], frac
+				}
+				cube.RenderCube(r, states[i], turn, f, ox, oy)
 			}
 		},
+		hud: func() []string {
+			return []string{
+				fmt.Sprintf("cubes %d  scramble %d", count, depth),
+				fmt.Sprintf("solved %d/%d", solvedCount(), count),
+			}
+		},
+		series: func() []float64 { return nil },
+		bounds: func() (float64, float64, float64, float64, bool) {
+			return 0, 0, float64(cols)*(cube.NetW+gap) - gap, float64(rows)*(cube.NetH+gap) - gap, true
+		},
+		leader:     func() (float64, float64, bool) { return 0, 0, false },
+		sensors:    func() (core.Vec2, []core.Vec2, bool) { return core.Vec2{}, nil, false },
+		regenerate: generate,
 	}
-	return launchGUI(onlineGUI("Galapagos — cube (efficientcube)", env, agent, maxSteps, seed, caps), log)
+	return launchGUI(run, log)
 }
