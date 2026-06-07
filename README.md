@@ -20,11 +20,14 @@ seed is chosen at random when none is given and logged, and passing `--seed N`
 | racing      | ✅ | ✅   | —          |
 | cartpole    | ✅ | ✅   | ✅         |
 | maze        | ✅ | ✅   | ✅         |
-| cube        | —  | —    | ✅         |
 
 The `cube` environment wraps the Rubik's cube model from
-[`rubix`](https://github.com/danielriddell21/rubix); Q-learning keys its table on
-the comparable cube state and learns to solve shallow scrambles.
+[`rubix`](https://github.com/danielriddell21/rubix) and is solved with
+**EfficientCube** (Takano, 2023): a neural policy trained by self-supervision —
+predicting the move that reverses each scramble step — then solving new scrambles
+with beam search. A small pure-Go/CPU net reliably solves shallow-to-moderate
+scrambles; deep (≈20-move) scrambles are best-effort. The trainable MLP lives in
+`internal/nn`.
 
 ## Install
 
@@ -74,7 +77,7 @@ galapagos race --headless --config configs/racing-neat.yaml  # NEAT evolves topo
 galapagos cartpole --headless --agent ga                     # GA balances a pole
 galapagos cartpole --headless --agent qlearning              # tabular Q-learning balances a pole
 galapagos maze --headless --agent qlearning                  # Q-learning solves a maze
-galapagos cube --headless --scramble 4                       # Q-learning solves a scrambled cube
+galapagos cube --headless --eval-depth 6                     # EfficientCube learns to solve a cube
 ```
 
 ### Windowed demo

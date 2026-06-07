@@ -28,7 +28,7 @@ func SoftmaxCrossEntropy(logits []float64, target int) (loss float64, dLogits []
 	p := Softmax(logits)
 	loss = -math.Log(max(p[target], 1e-12))
 	dLogits = p // reuse
-	dLogits[target] -= 1
+	dLogits[target]--
 	return loss, dLogits
 }
 
