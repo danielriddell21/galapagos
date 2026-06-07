@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"image"
 	"image/color"
 	"log/slog"
 	"math/rand/v2"
@@ -36,9 +37,14 @@ type game struct {
 	follow   bool
 	showRays bool
 	speed    int
+
+	rec   *recorder // non-nil when recording a GIF
+	pix   []byte    // reusable RGBA readback buffer
+	saved bool
 }
 
-// launchGUI opens a window driving the given run.
+// launchGUI opens a window driving the given run. When --record is set it records
+// a GIF and exits instead of running interactively.
 func launchGUI(run guiRun, log *slog.Logger) error {
 	g := &game{
 		run:   run,
@@ -46,6 +52,10 @@ func launchGUI(run guiRun, log *slog.Logger) error {
 		ren:   ebrender.New(screenW, screenH),
 		start: time.Now(),
 		speed: 1,
+	}
+	if recordPath != "" {
+		g.rec = newRecorder(recordFrames, recordFPS, recordScale)
+		g.speed = 2 // a steady pace for a lively recording
 	}
 	eb.SetWindowSize(screenW, screenH)
 	eb.SetWindowTitle(run.title)
@@ -55,8 +65,20 @@ func launchGUI(run guiRun, log *slog.Logger) error {
 	return nil
 }
 
-// Update handles input and advances the simulation.
+// Update handles input and advances the simulation. When recording finishes it
+// writes the GIF and terminates the game loop.
 func (g *game) Update() error {
+	if g.rec != nil && g.rec.done {
+		if !g.saved {
+			if err := g.rec.save(recordPath); err != nil {
+				g.log.Error("record failed", "err", err)
+			} else {
+				g.log.Info("recorded", "path", recordPath, "frames", len(g.rec.frames))
+			}
+			g.saved = true
+		}
+		return eb.Termination
+	}
 	g.handleInput()
 	if g.paused {
 		return nil
@@ -125,6 +147,14 @@ func (g *game) Draw(screen *eb.Image) {
 	g.drawHUD()
 	g.drawKeymap()
 	g.drawSparkline(g.run.series())
+
+	if g.rec != nil && !g.rec.done {
+		if g.pix == nil {
+			g.pix = make([]byte, 4*screenW*screenH)
+		}
+		screen.ReadPixels(g.pix)
+		g.rec.add(&image.RGBA{Pix: g.pix, Stride: 4 * screenW, Rect: image.Rect(0, 0, screenW, screenH)})
+	}
 }
 
 // updateCamera follows the leader when enabled and available, otherwise frames

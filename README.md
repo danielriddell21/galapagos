@@ -29,6 +29,8 @@ with beam search. A small pure-Go/CPU net reliably solves shallow-to-moderate
 scrambles; deep (≈20-move) scrambles are best-effort. The trainable MLP lives in
 `internal/nn`.
 
+See [docs/demos.md](docs/demos.md) for an animated GIF of each tool in action.
+
 ## Install
 
 On macOS, the Homebrew **cask** installs the full binary — the native window plus

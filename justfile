@@ -21,3 +21,12 @@ wasm:
 # Build the browser demo, then serve it.
 serve: wasm
     go run ./cmd/galapagos serve
+
+# Record a demo GIF per GUI tool (requires a display + OpenGL). Each tool is run
+# explicitly and writes one GIF into docs/demos/.
+demos:
+    mkdir -p docs/demos
+    go run -tags ebiten ./cmd/galapagos race --record docs/demos/race.gif --record-frames 220 --seed 7
+    go run -tags ebiten ./cmd/galapagos cartpole --agent ga --record docs/demos/cartpole.gif --record-frames 180 --seed 7
+    go run -tags ebiten ./cmd/galapagos maze --agent qlearning --record docs/demos/maze.gif --record-frames 180 --seed 7
+    go run -tags ebiten ./cmd/galapagos cube --cubes 9 --iters 1500 --record docs/demos/cube.gif --record-frames 200 --seed 7
