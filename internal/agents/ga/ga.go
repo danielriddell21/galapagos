@@ -115,6 +115,14 @@ func (p *Population) EndEpisode(total core.Reward) {}
 // Best returns the genome of the fittest member, for saving.
 func (p *Population) Best() []float64 { return clone(p.best().genome) }
 
+// BestPolicy compiles the fittest member's network over a cloned genome into a
+// standalone forward function, fixed against later evolution and safe to call
+// concurrently. It backs hall-of-fame co-evolution, where a frozen champion is
+// the opponent for the next generation.
+func (p *Population) BestPolicy() func(obs []float64) []float64 {
+	return newNet(p.cfg.Inputs, p.cfg.HiddenSize, p.cfg.Outputs, clone(p.best().genome)).forward
+}
+
 // SetMemberGenome replaces member i's genome, for injecting a loaded driver
 // into a running population. The genome must match the network shape.
 func (p *Population) SetMemberGenome(i int, genome []float64) error {

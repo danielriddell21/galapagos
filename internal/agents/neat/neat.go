@@ -100,6 +100,14 @@ func (p *Population) Observe(s core.State, a core.Action, r core.Reward, next co
 // EndEpisode is unused: fitness is recorded per member by the simulation.
 func (p *Population) EndEpisode(total core.Reward) {}
 
+// BestPolicy compiles the fittest genome over a clone into a standalone forward
+// function, fixed against later evolution and safe to call concurrently. It
+// backs hall-of-fame co-evolution, where a frozen champion is the opponent for
+// the next generation.
+func (p *Population) BestPolicy() func(obs []float64) []float64 {
+	return build(p.best().clone()).forward
+}
+
 // best returns the fittest member.
 func (p *Population) best() *genome {
 	return slices.MaxFunc(p.members, func(a, b *genome) int {
