@@ -15,19 +15,14 @@ any agent can run in any environment. Runs are deterministic from their seed: a
 seed is chosen at random when none is given and logged, and passing `--seed N`
 (or a config seed) reproduces a run exactly.
 
-| environment | ga | neat | qlearning |
-|-------------|----|------|-----------|
-| racing      | ✅ | ✅   | —          |
-| cartpole    | ✅ | ✅   | ✅         |
-| maze        | ✅ | ✅   | ✅         |
-
-The `cube` environment wraps the Rubik's cube model from
-[`rubix`](https://github.com/danielriddell21/rubix) and is solved with
-**EfficientCube** (Takano, 2023): a neural policy trained by self-supervision —
-predicting the move that reverses each scramble step — then solving new scrambles
-with beam search. A small pure-Go/CPU net reliably solves shallow-to-moderate
-scrambles; deep (≈20-move) scrambles are best-effort. The trainable MLP lives in
-`internal/nn`.
+| environment | ga | neat | qlearning | efficientcube | evochess |
+|-------------|----|------|-----------|---------------|----------|
+| racing      | ✅ | ✅   | —          | —              | —        |
+| cartpole    | ✅ | ✅   | ✅         | —              | —        |
+| maze        | ✅ | ✅   | ✅         | —              | —        |
+| cube        | —  | —    | —          | ✅             | —        |
+| flappy      | ✅ | ✅   | —          | —              | —        |
+| chess       | ✅ | ✅   | —          | —              | ✅       |
 
 See [docs/demos.md](docs/demos.md) for an animated GIF of each tool in action.
 
@@ -80,6 +75,9 @@ galapagos cartpole --headless --agent ga                     # GA balances a pol
 galapagos cartpole --headless --agent qlearning              # tabular Q-learning balances a pole
 galapagos maze --headless --agent qlearning                  # Q-learning solves a maze
 galapagos cube --headless --eval-depth 6                     # EfficientCube learns to solve a cube
+galapagos flappy --headless --agent ga                       # GA evolves a swarm of birds
+galapagos chess --headless --agent ga --opponent coevolution # GA co-evolves a chess player
+galapagos chess --headless --agent evochess --depth 2        # evolve an evaluator + alpha-beta search
 ```
 
 ### Windowed demo
@@ -110,7 +108,8 @@ For a browser build, `just wasm` compiles the demo to WebAssembly and stages the
 
 - `internal/core` — the interfaces connecting environments, agents, and the renderer
 - `internal/sim` — the simulation loop, parallel evaluation, and telemetry
-- `internal/envs` — environments (racing; cart-pole and maze)
-- `internal/agents` — learning algorithms (genetic algorithm; Q-learning; NEAT)
+- `internal/envs` — environments (racing; cart-pole, maze, cube, flappy, and chess)
+- `internal/agents` — learning algorithms (genetic algorithm; NEAT; Q-learning; EfficientCube; evochess)
+- `internal/nn` — a small pure-Go trainable MLP (backprop, Adam) used by EfficientCube
 - `internal/render` — the headless renderer and the Ebiten window
 - `cmd/galapagos` — the command-line entrypoint

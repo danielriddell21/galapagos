@@ -29,4 +29,6 @@ demos:
     go run -tags ebiten ./cmd/galapagos race --record docs/demos/race.gif --record-frames 220 --seed 7
     go run -tags ebiten ./cmd/galapagos cartpole --agent ga --record docs/demos/cartpole.gif --record-frames 180 --seed 7
     go run -tags ebiten ./cmd/galapagos maze --agent qlearning --record docs/demos/maze.gif --record-frames 180 --seed 7
-    go run -tags ebiten ./cmd/galapagos cube --cubes 9 --iters 1500 --record docs/demos/cube.gif --record-frames 200 --seed 7
+    go run -tags ebiten ./cmd/galapagos cube --iters 1500 --record docs/demos/cube.gif --record-frames 200 --seed 7
+    go run -tags ebiten ./cmd/galapagos flappy --agent ga --record docs/demos/flappy.gif --record-frames 130 --seed 7
+    go run -tags ebiten ./cmd/galapagos chess --agent ga --opponent coevolution --record docs/demos/chess.gif --record-frames 95 --seed 7

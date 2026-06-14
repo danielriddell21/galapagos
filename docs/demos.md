@@ -47,3 +47,28 @@ plays it back on a solid, rotating 3D cube (rendered via the rubix engine).
 ```sh
 go run -tags ebiten ./cmd/galapagos cube --record docs/demos/cube.gif --seed 7
 ```
+
+## Flappy — a GA swarm learning to flap through the gaps
+
+A genetic-algorithm population flies a swarm of birds through scrolling pipe gaps on
+one shared course; each bird flaps by its own evolved network and crashes out until
+the fittest survive, the swarm thinning and improving each generation.
+
+![flappy](demos/flappy.gif)
+
+```sh
+go run -tags ebiten ./cmd/galapagos flappy --agent ga --record docs/demos/flappy.gif --seed 7
+```
+
+## Chess — a co-evolving evolutionary player
+
+A GA population evolves to play chess (via the gambit engine), each generation
+scored against a frozen copy of the previous generation's best — a hall-of-fame
+champion that strengthens over time. The clip trains first, then shows the evolved
+player (White) against a random opponent, grabbing material as it goes.
+
+![chess](demos/chess.gif)
+
+```sh
+go run -tags ebiten ./cmd/galapagos chess --agent ga --opponent coevolution --record docs/demos/chess.gif --seed 7
+```
