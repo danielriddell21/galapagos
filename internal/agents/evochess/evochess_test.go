@@ -74,7 +74,8 @@ func TestDeterministicFromSeed(t *testing.T) {
 		p := New(Config{Population: 4, Depth: 2, Seed: 5})
 		return bestMove(p.best().eval, gambit.NewStartingBoard(), 2).To()
 	}
-	if move() != move() {
+	first, second := move(), move()
+	if first != second {
 		t.Fatal("same seed produced different opening moves")
 	}
 }
