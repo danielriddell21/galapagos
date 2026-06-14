@@ -45,6 +45,17 @@ brew install danielriddell21/tap/galapagos
 The native window is macOS-only (it uses Metal, which needs no extra libraries).
 On any platform, `galapagos serve` opens the WebAssembly demo in your browser.
 
+<details>
+<summary>Linux: OpenGL/X11 libraries</summary>
+
+Building the native window from source on Linux (`go build -tags ebiten ./cmd/galapagos`)
+needs OpenGL/X11. On Debian/Ubuntu:
+
+```sh
+sudo apt install libgl1-mesa-dev libxrandr-dev libxcursor-dev libxinerama-dev libxi-dev
+```
+</details>
+
 ## Build
 
 Requires Go 1.26 (auto-downloaded via the toolchain directive).
