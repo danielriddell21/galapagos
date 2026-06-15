@@ -1,0 +1,22 @@
+# Codecov configuration.
+#
+# Patch (new-code) coverage is reported but not enforced. A meaningful share of
+# the codebase is Ebiten window and Cobra CLI wiring that is exercised through a
+# running window rather than unit tests, so a few uncovered wiring lines should
+# not block a PR. Overall project coverage is still gated so the suite cannot
+# silently regress.
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        informational: true
+
+# Presentation and window wiring that is only meaningful through a running GUI.
+ignore:
+  - "cmd/galapagos/gui.go"
+  - "cmd/galapagos/gui_ebiten.go"
+  - "cmd/galapagos/gui_stub.go"

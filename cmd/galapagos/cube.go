@@ -16,6 +16,20 @@ import (
 
 var cubeKeymap = []string{"space pause", "+/- speed", "r new scrambles"}
 
+// coupleScramble raises the training depth and search horizon to cover a
+// scramble of the given target depth, never shrinking values the user set
+// higher. The horizon keeps a small margin above the scramble so the solver can
+// still find a slightly suboptimal solution.
+func coupleScramble(target, scrambleK, maxDepth int) (k, depth int) {
+	if scrambleK < target {
+		scrambleK = target
+	}
+	if maxDepth < target+2 {
+		maxDepth = target + 2
+	}
+	return scrambleK, maxDepth
+}
+
 func init() {
 	var (
 		// training
@@ -52,12 +66,7 @@ func init() {
 			if headless {
 				target = evalDep
 			}
-			if scrK < target {
-				scrK = target
-			}
-			if maxDepth < target+2 {
-				maxDepth = target + 2
-			}
+			scrK, maxDepth = coupleScramble(target, scrK, maxDepth)
 			log.Info("scramble", "depth", target, "train_k", scrK, "max_depth", maxDepth)
 
 			policy, err := loadOrTrainPolicy(model, train, efficientcube.TrainConfig{
