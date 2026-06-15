@@ -3,6 +3,8 @@ package maze
 import (
 	"math/rand/v2"
 	"testing"
+
+	"github.com/danielriddell21/galapagos/internal/render"
 )
 
 func newRNG() *rand.Rand { return rand.New(rand.NewPCG(1, 2)) }
@@ -39,6 +41,28 @@ func TestMazeIsFullyConnected(t *testing.T) {
 	if count != w*h {
 		t.Fatalf("reached %d cells, want %d (maze not fully connected)", count, w*h)
 	}
+}
+
+func TestStatusAndRenderReflectGoal(t *testing.T) {
+	e := New(Config{Width: 6, Height: 6, MaxSteps: 10000})
+	e.Reset(newRNG())
+
+	// Before reaching the exit the agent is exploring; Render draws the goal and
+	// agent in their base colors.
+	if got := e.Status(); got != "exploring" {
+		t.Fatalf("fresh maze status = %q, want %q", got, "exploring")
+	}
+	e.Render(render.NewNop())
+
+	if !exploreToGoal(e) {
+		t.Fatal("goal not reachable")
+	}
+
+	// At the exit the status flips and Render takes the lit-up (solved) path.
+	if got := e.Status(); got != "solved" {
+		t.Fatalf("status at goal = %q, want %q", got, "solved")
+	}
+	e.Render(render.NewNop())
 }
 
 func TestMazeReachableByGreedyDFS(t *testing.T) {
