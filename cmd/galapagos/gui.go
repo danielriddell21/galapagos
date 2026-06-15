@@ -65,11 +65,18 @@ func populationGUI(title string, env core.MultiEnvironment, pop core.PopulationA
 		},
 		hud: func() []string {
 			f := live.Fitness()
-			return []string{
+			b := best()
+			lines := []string{
 				fmt.Sprintf("generation %d", pop.Generation()),
 				fmt.Sprintf("alive %d/%d", env.Alive(), pop.Len()),
-				fmt.Sprintf("best %.1f", f[best()]),
+				fmt.Sprintf("best %.1f", f[b]),
 			}
+			if s, ok := env.(interface{ BodyStatus(int) (string, bool) }); ok {
+				if line, ok2 := s.BodyStatus(b); ok2 {
+					lines = append(lines, line)
+				}
+			}
+			return lines
 		},
 		series:     tel.BestSeries,
 		bounds:     caps.bounds,

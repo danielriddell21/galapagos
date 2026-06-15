@@ -57,6 +57,20 @@ func (m *multiAdapter) StepAll(actions []core.Action) (states []core.State, rewa
 	return states, rewards, m.done
 }
 
+// BodyStatus returns body i's status string when the underlying environment
+// exposes one (e.g. flappy's pipes-cleared count), for the HUD to show the
+// leader's progress. It reports false when i is out of range or the body has no
+// Status method.
+func (m *multiAdapter) BodyStatus(i int) (string, bool) {
+	if i < 0 || i >= len(m.bodies) {
+		return "", false
+	}
+	if s, ok := m.bodies[i].(interface{ Status() string }); ok {
+		return s.Status(), true
+	}
+	return "", false
+}
+
 func (m *multiAdapter) ActionSpec() core.Spec      { return m.make().ActionSpec() }
 func (m *multiAdapter) ObservationSpec() core.Spec { return m.make().ObservationSpec() }
 func (m *multiAdapter) Alive() int                 { return m.alive }
