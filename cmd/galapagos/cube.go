@@ -45,6 +45,21 @@ func init() {
 			log := slog.New(slog.NewTextHandler(os.Stderr, nil))
 			seed = resolveSeed(cmd, 0, log)
 
+			// Couple training depth and search horizon to the deepest scramble we
+			// will face, so a deeper --scramble is always trained for and solvable
+			// rather than silently undertrained. Beyond ~8 it stays best-effort.
+			target := guiDepth
+			if headless {
+				target = evalDep
+			}
+			if scrK < target {
+				scrK = target
+			}
+			if maxDepth < target+2 {
+				maxDepth = target + 2
+			}
+			log.Info("scramble", "depth", target, "train_k", scrK, "max_depth", maxDepth)
+
 			policy, err := loadOrTrainPolicy(model, train, efficientcube.TrainConfig{
 				Hidden: hidden, K: scrK, Batch: batch, Iters: iters, LR: lr, Seed: seed,
 			}, log)
@@ -60,18 +75,18 @@ func init() {
 			return cubeWall(policy, beam, cubes, guiDepth, seed, log)
 		},
 	}
-	cmd.Flags().IntVar(&iters, "iters", 2000, "training iterations")
+	cmd.Flags().IntVar(&iters, "iters", 3000, "training iterations")
 	cmd.Flags().IntVar(&batch, "batch", 256, "examples per training step")
-	cmd.Flags().IntVar(&scrK, "scramble-k", 6, "max scramble length used for training")
+	cmd.Flags().IntVar(&scrK, "scramble-k", 8, "max scramble length used for training (auto-raised to the scramble depth)")
 	cmd.Flags().IntSliceVar(&hidden, "hidden", []int{128, 64}, "hidden layer sizes")
 	cmd.Flags().Float64Var(&lr, "lr", 1e-3, "Adam learning rate")
 	cmd.Flags().StringVar(&model, "model", "", "policy file to load (skip training) or save to")
 	cmd.Flags().BoolVar(&train, "train", true, "train a policy (false loads --model)")
 	cmd.Flags().IntVar(&evalN, "eval-scrambles", 100, "scrambles to solve in headless eval")
 	cmd.Flags().IntVar(&evalDep, "eval-depth", 6, "scramble depth for headless eval")
-	cmd.Flags().IntVar(&beamW, "beam-width", 200, "beam search width")
-	cmd.Flags().IntVar(&maxDepth, "max-depth", 18, "maximum solution length searched")
-	cmd.Flags().IntVar(&guiDepth, "scramble", 6, "scramble depth shown in the window")
+	cmd.Flags().IntVar(&beamW, "beam-width", 2000, "beam search width (wider solves deeper scrambles more reliably)")
+	cmd.Flags().IntVar(&maxDepth, "max-depth", 20, "maximum solution length searched")
+	cmd.Flags().IntVar(&guiDepth, "scramble", 8, "scramble depth shown in the window")
 	cmd.Flags().IntVar(&cubes, "cubes", 1, "number of cubes solved in parallel in the window")
 	cmd.Flags().Int64Var(&seed, "seed", 0, "run seed (default: random, logged)")
 	cmd.Flags().BoolVar(&headless, "headless", false, "train and evaluate without a window")
