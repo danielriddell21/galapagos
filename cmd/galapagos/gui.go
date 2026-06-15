@@ -86,20 +86,31 @@ func populationGUI(title string, env core.MultiEnvironment, pop core.PopulationA
 func onlineGUI(title string, env core.Environment, agent core.Agent, maxSteps int, seed int64, caps runCaps) guiRun {
 	ep := sim.NewLiveEpisode(env, agent, maxSteps, seed)
 	var returns []float64
+	solver, goalBased := env.(interface{ Solved() bool })
+	solved := 0
 
 	return guiRun{
-		title:    title,
-		keymap:   caps.keymap,
-		step:     ep.Step,
-		complete: func() { returns = append(returns, float64(ep.Return())) },
-		next:     ep.NextEpisode,
-		render:   func(r core.Renderer) { env.Render(r) },
+		title:  title,
+		keymap: caps.keymap,
+		step:   ep.Step,
+		complete: func() {
+			returns = append(returns, float64(ep.Return()))
+			if goalBased && solver.Solved() {
+				solved++
+			}
+		},
+		next:   ep.NextEpisode,
+		render: func(r core.Renderer) { env.Render(r) },
 		hud: func() []string {
-			return []string{
+			lines := []string{
 				fmt.Sprintf("episode %d", ep.Episode()),
 				fmt.Sprintf("step %d", ep.StepCount()),
 				fmt.Sprintf("return %.2f", float64(ep.Return())),
 			}
+			if goalBased {
+				lines = append(lines, fmt.Sprintf("solved %d", solved))
+			}
+			return lines
 		},
 		series:     func() []float64 { return returns },
 		bounds:     caps.bounds,

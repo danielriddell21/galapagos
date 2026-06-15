@@ -159,9 +159,21 @@ func direction(a core.Action) int {
 	return min(max(d, 0), 3)
 }
 
-// Render draws the maze walls and the agent.
+// Render draws the goal cell, the maze walls, and the agent. The goal and the
+// agent light up green once the exit is reached.
 func (e *Env) Render(r core.Renderer) {
 	const s = 32.0
+	const pad = 5.0
+	solved := e.Solved()
+
+	// Goal marker at the bottom-right exit cell, brighter once reached.
+	goalCol := color.RGBA{60, 140, 70, 255}
+	if solved {
+		goalCol = color.RGBA{90, 230, 110, 255}
+	}
+	gx, gy := float64(e.cfg.Width-1)*s, float64(e.cfg.Height-1)*s
+	r.Polygon([][2]float64{{gx + pad, gy + pad}, {gx + s - pad, gy + pad}, {gx + s - pad, gy + s - pad}, {gx + pad, gy + s - pad}}, goalCol)
+
 	for y := range e.cfg.Height {
 		for x := range e.cfg.Width {
 			w := e.open[e.cell(x, y)]
@@ -181,5 +193,17 @@ func (e *Env) Render(r core.Renderer) {
 			}
 		}
 	}
-	r.Circle(float64(e.x)*s+s/2, float64(e.y)*s+s/2, s/3, color.RGBA{80, 180, 255, 255})
+	agentCol := color.RGBA{80, 180, 255, 255}
+	if solved {
+		agentCol = color.RGBA{90, 230, 110, 255}
+	}
+	r.Circle(float64(e.x)*s+s/2, float64(e.y)*s+s/2, s/3, agentCol)
+}
+
+// Status reports whether the agent has reached the goal, for the HUD.
+func (e *Env) Status() string {
+	if e.Solved() {
+		return "solved"
+	}
+	return "exploring"
 }
