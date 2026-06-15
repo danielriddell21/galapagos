@@ -9,11 +9,16 @@ coverage:
         threshold: 1%
     patch:
       default:
-        target: auto
-        threshold: 1%
+        # New code should be covered, but a meaningful share of changes are
+        # Ebiten window and Cobra CLI wiring exercised only through a running
+        # window. Report patch coverage without blocking a PR on those lines.
+        informational: true
 
 ignore:
   - "cmd/galapagos/main.go"
+  - "cmd/galapagos/gui.go"
+  - "cmd/galapagos/gui_ebiten.go"
+  - "cmd/galapagos/gui_stub.go"
   - "tests/"
 
 comment:
