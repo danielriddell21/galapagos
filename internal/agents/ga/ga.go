@@ -13,8 +13,9 @@ import (
 // reproduction, and both derive purely from the seed (and index/generation) so
 // runs are reproducible regardless of evaluation order.
 const (
-	streamInit   uint64 = 0x53c5ff8e3d9b1a77
-	streamEvolve uint64 = 0x6a09e667f3bcc908
+	streamInit      uint64 = 0x53c5ff8e3d9b1a77
+	streamEvolve    uint64 = 0x6a09e667f3bcc908
+	streamImmigrant uint64 = 0x9e3779b97f4a7c15
 )
 
 // Config parameters the genetic algorithm. Inputs and Outputs are set from the
@@ -29,6 +30,21 @@ type Config struct {
 	Outputs        int
 	TournamentSize int
 	Seed           int64
+
+	// Diversity controls that resist premature convergence (the population
+	// collapsing to clones of the elite and stalling in a local optimum). Both
+	// default to sensible values in New when left zero.
+	//
+	// ImmigrantFraction is the share of each generation reseeded with fresh
+	// random genomes, keeping a permanent floor of genetic diversity.
+	//
+	// When the best fitness has not improved for StagnationWindow generations the
+	// breeding mutation rate and spread are scaled by HyperMutation, perturbing
+	// the converged population hard enough to escape the optimum, then relaxing
+	// once progress resumes.
+	ImmigrantFraction float64
+	StagnationWindow  int
+	HyperMutation     float64
 }
 
 // vecAction is a generic action carrying a raw control vector, so the agent
@@ -66,6 +82,12 @@ type Population struct {
 	cfg     Config
 	members []*individual
 	gen     int
+
+	// Stagnation tracking for adaptive mutation. bestSeen is the best fitness
+	// observed so far; stalled counts generations since it last improved.
+	bestSeen core.Reward
+	stalled  int
+	hasBest  bool
 }
 
 // New creates an initial population with Gaussian-random genomes. Each member's
@@ -74,6 +96,15 @@ type Population struct {
 func New(cfg Config) *Population {
 	if cfg.TournamentSize <= 0 {
 		cfg.TournamentSize = 3
+	}
+	if cfg.ImmigrantFraction == 0 {
+		cfg.ImmigrantFraction = 0.15
+	}
+	if cfg.StagnationWindow == 0 {
+		cfg.StagnationWindow = 4
+	}
+	if cfg.HyperMutation == 0 {
+		cfg.HyperMutation = 6
 	}
 	genomeLen := GenomeLen(cfg.Inputs, cfg.HiddenSize, cfg.Outputs)
 	p := &Population{cfg: cfg, members: make([]*individual, cfg.Population)}
@@ -143,28 +174,57 @@ func (p *Population) best() *individual {
 	})
 }
 
-// Evolve produces the next generation: elites are cloned unmutated, and the
-// remainder are bred by tournament selection, crossover, and mutation. All
-// randomness derives from the seed and generation, so reproduction is
-// deterministic and independent of how fitness was evaluated.
+// Evolve produces the next generation: elites are cloned unmutated, a slice of
+// fresh random immigrants is injected to keep the gene pool diverse, and the
+// remainder are bred by tournament selection, crossover, and mutation. When the
+// best fitness has stalled, the breeding mutation is scaled up to break out of a
+// local optimum. All randomness derives from the seed and generation, so
+// reproduction is deterministic and independent of how fitness was evaluated.
 func (p *Population) Evolve() {
 	rng := rand.New(rand.NewPCG(uint64(p.cfg.Seed)^streamEvolve, uint64(p.gen)))
+	n := len(p.members)
 
 	ranked := slices.Clone(p.members)
 	slices.SortFunc(ranked, func(a, b *individual) int {
 		return cmpReward(b.fitness, a.fitness) // descending
 	})
 
-	eliteCount := max(1, int(p.cfg.EliteFraction*float64(len(p.members))))
-	next := make([]*individual, 0, len(p.members))
+	// Track stagnation on the best fitness so mutation can adapt: timid while the
+	// champion keeps improving, aggressive once it plateaus.
+	if best := ranked[0].fitness; !p.hasBest || best > p.bestSeen {
+		p.bestSeen, p.stalled, p.hasBest = best, 0, true
+	} else {
+		p.stalled++
+	}
+	rate, std := p.cfg.MutationRate, p.cfg.MutationStd
+	if p.cfg.StagnationWindow > 0 && p.stalled >= p.cfg.StagnationWindow {
+		// While the champion is stuck, widen the breeding mutation to explore past
+		// the local optimum. A fixed, moderate boost works better than escalating
+		// it further, which degrades into an unproductive random search.
+		rate = min(1, rate*p.cfg.HyperMutation)
+		std *= p.cfg.HyperMutation
+	}
+
+	eliteCount := max(1, int(p.cfg.EliteFraction*float64(n)))
+	immigrantCount := int(p.cfg.ImmigrantFraction * float64(n))
+	if eliteCount+immigrantCount > n {
+		immigrantCount = n - eliteCount
+	}
+
+	next := make([]*individual, 0, n)
 	for i := range eliteCount {
 		next = append(next, newIndividual(p.cfg, clone(ranked[i].genome)))
 	}
-	for len(next) < len(p.members) {
+	genomeLen := GenomeLen(p.cfg.Inputs, p.cfg.HiddenSize, p.cfg.Outputs)
+	for i := range immigrantCount {
+		irng := rand.New(rand.NewPCG(uint64(p.cfg.Seed)^streamImmigrant, uint64(p.gen)*uint64(n)+uint64(i)))
+		next = append(next, newIndividual(p.cfg, randomGenome(genomeLen, irng)))
+	}
+	for len(next) < n {
 		a := tournament(ranked, p.cfg.TournamentSize, rng)
 		b := tournament(ranked, p.cfg.TournamentSize, rng)
 		child := crossover(a.genome, b.genome, rng)
-		mutate(child, p.cfg.MutationRate, p.cfg.MutationStd, rng)
+		mutate(child, rate, std, rng)
 		next = append(next, newIndividual(p.cfg, child))
 	}
 
