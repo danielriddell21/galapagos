@@ -102,6 +102,65 @@ func TestEvolvePreservesEliteAndIsDeterministic(t *testing.T) {
 	}
 }
 
+func TestNewSetsDiversityDefaults(t *testing.T) {
+	// Leaving the diversity fields zero must fill in sensible defaults so every
+	// GA run resists premature convergence without explicit configuration.
+	p := New(testConfig())
+	if p.cfg.ImmigrantFraction <= 0 || p.cfg.StagnationWindow <= 0 || p.cfg.HyperMutation <= 1 {
+		t.Fatalf("diversity defaults not set: imm=%v win=%d hyper=%v",
+			p.cfg.ImmigrantFraction, p.cfg.StagnationWindow, p.cfg.HyperMutation)
+	}
+}
+
+func TestEvolveInjectsImmigrants(t *testing.T) {
+	p := New(testConfig())
+	assignFitness(p)
+	n := len(p.members)
+	eliteCount := max(1, int(p.cfg.EliteFraction*float64(n)))
+	immigrantCount := int(p.cfg.ImmigrantFraction * float64(n))
+	if immigrantCount == 0 {
+		t.Fatal("expected at least one immigrant per generation")
+	}
+	p.Evolve()
+
+	// The immigrant slots (just after the elites) must be the fresh random
+	// genomes drawn from the dedicated immigrant stream for generation 0.
+	genomeLen := GenomeLen(p.cfg.Inputs, p.cfg.HiddenSize, p.cfg.Outputs)
+	members := collect(p)
+	for i := range immigrantCount {
+		irng := rand.New(rand.NewPCG(uint64(p.cfg.Seed)^streamImmigrant, uint64(i)))
+		want := randomGenome(genomeLen, irng)
+		if !slices.Equal(members[eliteCount+i].Genome(), want) {
+			t.Fatalf("immigrant %d is not the expected fresh random genome", i)
+		}
+	}
+}
+
+func TestStagnationWidensMutation(t *testing.T) {
+	p := New(testConfig())
+	// Hold the best fitness flat across generations so the champion never
+	// improves; the stagnation counter must climb past the window, which is what
+	// triggers the widened (hyper) mutation that breaks out of a local optimum.
+	for range p.cfg.StagnationWindow + 2 {
+		for _, m := range collect(p) {
+			m.SetFitness(5)
+		}
+		p.Evolve()
+	}
+	if p.stalled < p.cfg.StagnationWindow {
+		t.Fatalf("stalled = %d, want >= window %d after flat fitness", p.stalled, p.cfg.StagnationWindow)
+	}
+
+	// A genuine improvement must reset the stagnation counter.
+	for _, m := range collect(p) {
+		m.SetFitness(100)
+	}
+	p.Evolve()
+	if p.stalled != 0 {
+		t.Fatalf("stalled = %d, want 0 after the champion improved", p.stalled)
+	}
+}
+
 func TestSaveLoadRoundTrip(t *testing.T) {
 	p := New(testConfig())
 	assignFitness(p)
