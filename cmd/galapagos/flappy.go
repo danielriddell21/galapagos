@@ -45,7 +45,7 @@ func init() {
 	cmd.Flags().StringVar(&agent, "agent", "ga", "agent: ga or neat")
 	cmd.Flags().IntVar(&generations, "generations", 40, "generations to evolve")
 	cmd.Flags().IntVar(&population, "population", 80, "population size (birds in the swarm)")
-	cmd.Flags().IntVar(&maxSteps, "max-steps", 600, "maximum steps per episode")
+	cmd.Flags().IntVar(&maxSteps, "max-steps", 2000, "maximum steps per episode")
 	cmd.Flags().Int64Var(&seed, "seed", 0, "run seed (default: random, logged)")
 	cmd.Flags().BoolVar(&headless, "headless", false, "train without a window")
 	rootCmd.AddCommand(cmd)

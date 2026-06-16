@@ -97,6 +97,33 @@ func TestObservationWithinBounds(t *testing.T) {
 	}
 }
 
+func TestClearingPipeCountsAndScores(t *testing.T) {
+	e := New(DefaultConfig())
+	e.Reset(newRNG())
+	if got := e.Status(); got != "pipes 0" {
+		t.Fatalf("fresh episode status = %q, want %q", got, "pipes 0")
+	}
+
+	// Place a single pipe one step away from passing the bird's x, with the bird
+	// centered in its gap so it clears cleanly rather than crashing.
+	e.birdY, e.birdVY = worldH/2, 0
+	e.pipes = []pipe{{x: birdX - pipeWidth + pipeSpeed - 0.01, gapTop: worldH/2 - gapHeight/2}}
+
+	_, r, done := e.Step(act(0))
+	if done {
+		t.Fatal("a bird inside the gap should not crash while clearing a pipe")
+	}
+	if e.cleared != 1 {
+		t.Fatalf("cleared = %d, want 1", e.cleared)
+	}
+	if float64(r) < clearBonus {
+		t.Fatalf("clearing reward = %v, want >= %v", float64(r), clearBonus)
+	}
+	if got := e.Status(); got != "pipes 1" {
+		t.Fatalf("status after clearing = %q, want %q", got, "pipes 1")
+	}
+}
+
 func TestRenderDoesNotPanic(t *testing.T) {
 	e := New(DefaultConfig())
 	e.Reset(newRNG())

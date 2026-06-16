@@ -7,6 +7,7 @@
 package flappy
 
 import (
+	"fmt"
 	"math/rand/v2"
 
 	"github.com/danielriddell21/galapagos/internal/core"
@@ -60,13 +61,14 @@ func (s State) Observation() []float64 { return s.obs }
 
 // Env is a flappy world.
 type Env struct {
-	cfg    Config
-	birdY  float64
-	birdVY float64
-	pipes  []pipe
-	t      int
-	rng    *rand.Rand
-	done   bool
+	cfg     Config
+	birdY   float64
+	birdVY  float64
+	pipes   []pipe
+	cleared int // pipes cleared this episode
+	t       int
+	rng     *rand.Rand
+	done    bool
 }
 
 // New returns a flappy environment.
@@ -78,6 +80,7 @@ func (e *Env) Reset(rng *rand.Rand) core.State {
 	e.rng = rand.New(rand.NewPCG(rng.Uint64(), 0xf1a99))
 	e.birdY = worldH / 2
 	e.birdVY = 0
+	e.cleared = 0
 	e.t = 0
 	e.done = false
 	e.pipes = make([]pipe, numPipes)
@@ -105,6 +108,7 @@ func (e *Env) Step(a core.Action) (core.State, core.Reward, bool) {
 		p := &e.pipes[i]
 		if !p.passed && p.x+pipeWidth < birdX {
 			p.passed = true
+			e.cleared++
 			reward += clearBonus
 		}
 		if p.x+pipeWidth < 0 {
@@ -188,6 +192,9 @@ func (e *Env) randGapTop() float64 {
 
 // Solved reports whether the bird is currently alive (used for rendering accent).
 func (e *Env) Solved() bool { return !e.done }
+
+// Status reports the pipes cleared this episode, surfaced in the swarm HUD.
+func (e *Env) Status() string { return fmt.Sprintf("pipes %d", e.cleared) }
 
 // ActionSpec implements core.Environment: one discrete action in {0 idle, 1 flap}.
 func (e *Env) ActionSpec() core.Spec {
