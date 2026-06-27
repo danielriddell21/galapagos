@@ -5,11 +5,12 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/spf13/cobra"
+
 	"github.com/danielriddell21/galapagos/internal/agents/evochess"
 	"github.com/danielriddell21/galapagos/internal/core"
 	"github.com/danielriddell21/galapagos/internal/envs/chess"
 	"github.com/danielriddell21/galapagos/internal/sim"
-	"github.com/spf13/cobra"
 )
 
 // rawAction carries a network's raw output vector as an action.

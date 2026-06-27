@@ -3,8 +3,9 @@ package chess
 import (
 	"image/color"
 
-	"github.com/danielriddell21/galapagos/internal/core"
 	gambit "github.com/danielriddell21/gambit/pkg/chess"
+
+	"github.com/danielriddell21/galapagos/internal/core"
 )
 
 // cell is the world size of one board square.

@@ -30,6 +30,7 @@ func (e *fakeSingleEnv) Step(a core.Action) (core.State, core.Reward, bool) {
 func (e *fakeSingleEnv) ActionSpec() core.Spec {
 	return core.Spec{Dim: 1, Low: []float64{0}, High: []float64{1}}
 }
+
 func (e *fakeSingleEnv) ObservationSpec() core.Spec {
 	return core.Spec{Dim: 1, Low: []float64{0}, High: []float64{1}}
 }

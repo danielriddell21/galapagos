@@ -14,8 +14,9 @@ package chess
 import (
 	"math/rand/v2"
 
-	"github.com/danielriddell21/galapagos/internal/core"
 	gambit "github.com/danielriddell21/gambit/pkg/chess"
+
+	"github.com/danielriddell21/galapagos/internal/core"
 )
 
 // Policy chooses a move for a position, returning a preference vector the

@@ -5,13 +5,14 @@ import (
 	"log/slog"
 	"math/rand/v2"
 
+	"github.com/spf13/cobra"
+
 	"github.com/danielriddell21/galapagos/internal/agents/ga"
 	"github.com/danielriddell21/galapagos/internal/agents/neat"
 	"github.com/danielriddell21/galapagos/internal/config"
 	"github.com/danielriddell21/galapagos/internal/core"
 	"github.com/danielriddell21/galapagos/internal/envs/racing"
 	"github.com/danielriddell21/galapagos/internal/sim"
-	"github.com/spf13/cobra"
 )
 
 // keymaps shown in the GUI's top-right overlay, per kind of run.

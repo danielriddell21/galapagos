@@ -5,8 +5,9 @@ import (
 	"math/rand/v2"
 	"slices"
 
-	"github.com/danielriddell21/galapagos/internal/core"
 	gambit "github.com/danielriddell21/gambit/pkg/chess"
+
+	"github.com/danielriddell21/galapagos/internal/core"
 )
 
 // PCG stream constants keep initialization and reproduction independent and

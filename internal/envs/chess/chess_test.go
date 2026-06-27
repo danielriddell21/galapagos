@@ -4,9 +4,10 @@ import (
 	"math/rand/v2"
 	"testing"
 
+	gambit "github.com/danielriddell21/gambit/pkg/chess"
+
 	"github.com/danielriddell21/galapagos/internal/core"
 	"github.com/danielriddell21/galapagos/internal/render"
-	gambit "github.com/danielriddell21/gambit/pkg/chess"
 )
 
 func newRNG() *rand.Rand { return rand.New(rand.NewPCG(1, 2)) }

@@ -3,8 +3,9 @@ package efficientcube
 import (
 	"math/rand/v2"
 
-	"github.com/danielriddell21/galapagos/internal/nn"
 	rubix "github.com/danielriddell21/rubix/pkg/cube"
+
+	"github.com/danielriddell21/galapagos/internal/nn"
 )
 
 // dataStream decorrelates the data-generation RNG from weight initialization.

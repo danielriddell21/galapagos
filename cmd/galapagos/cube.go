@@ -7,11 +7,12 @@ import (
 	"os"
 	"time"
 
+	rubix "github.com/danielriddell21/rubix/pkg/cube"
+	"github.com/spf13/cobra"
+
 	"github.com/danielriddell21/galapagos/internal/agents/efficientcube"
 	"github.com/danielriddell21/galapagos/internal/core"
 	"github.com/danielriddell21/galapagos/internal/envs/cube"
-	rubix "github.com/danielriddell21/rubix/pkg/cube"
-	"github.com/spf13/cobra"
 )
 
 var cubeKeymap = []string{"space pause", "+/- speed", "r new scrambles"}
@@ -107,7 +108,11 @@ func init() {
 func loadOrTrainPolicy(model string, train bool, cfg efficientcube.TrainConfig, log *slog.Logger) (*efficientcube.Policy, error) {
 	if model != "" && !train {
 		log.Info("loading policy", "path", model)
-		return efficientcube.LoadPolicy(model)
+		p, err := efficientcube.LoadPolicy(model)
+		if err != nil {
+			return nil, fmt.Errorf("load policy %q: %w", model, err)
+		}
+		return p, nil
 	}
 	log.Info("training", "iters", cfg.Iters, "scramble_k", cfg.K, "hidden", cfg.Hidden, "seed", cfg.Seed)
 	p := efficientcube.Train(cfg, func(it int, loss, acc float64) {
@@ -115,7 +120,7 @@ func loadOrTrainPolicy(model string, train bool, cfg efficientcube.TrainConfig, 
 	})
 	if model != "" {
 		if err := p.Save(model); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("save policy %q: %w", model, err)
 		}
 		log.Info("saved policy", "path", model)
 	}
@@ -177,42 +182,23 @@ func cubeWall(p *efficientcube.Policy, beam efficientcube.BeamConfig, count, dep
 	}
 	generate(seed)
 
-	solvedCount := func() int {
-		k := 0
-		for i := range count {
-			if states[i].IsSolved() {
-				k++
-			}
-		}
-		return k
-	}
+	solvedCount := func() int { return countSolved(states) }
 
 	run := guiRun{
 		title:  "Galapagos — cube (efficientcube)",
 		keymap: cubeKeymap,
 		step: func() bool {
-			pending := false
-			for i := range count {
-				if !states[i].IsSolved() && idx[i] < len(plans[i]) {
-					pending = true
-				}
+			if !cubesPending(states, plans, idx) {
+				// All cubes finished; hold the solved cubes briefly before the next batch.
+				hold++
+				return hold >= 45
 			}
-			if pending {
-				// Advance the shared turn animation; apply the moves when it completes.
-				if frac += 1.0 / turnFrames; frac >= 1 {
-					frac = 0
-					for i := range count {
-						if !states[i].IsSolved() && idx[i] < len(plans[i]) {
-							states[i] = states[i].Applied(plans[i][idx[i]])
-							idx[i]++
-						}
-					}
-				}
-				return false
+			// Advance the shared turn animation; apply the moves when it completes.
+			if frac += 1.0 / turnFrames; frac >= 1 {
+				frac = 0
+				advanceCubes(states, plans, idx)
 			}
-			// All cubes finished; hold the solved cubes briefly before the next batch.
-			hold++
-			return hold >= 45
+			return false
 		},
 		next: func() { generate(cur + int64(count)) },
 		render: func(r core.Renderer) {
@@ -241,4 +227,35 @@ func cubeWall(p *efficientcube.Policy, beam efficientcube.BeamConfig, count, dep
 		regenerate: generate,
 	}
 	return launchGUI(run, log)
+}
+
+// cubesPending reports whether any cube still has a planned move left to play.
+func cubesPending(states []rubix.Cube, plans [][]rubix.Move, idx []int) bool {
+	for i := range states {
+		if !states[i].IsSolved() && idx[i] < len(plans[i]) {
+			return true
+		}
+	}
+	return false
+}
+
+// advanceCubes applies the next planned move to every cube that still has one.
+func advanceCubes(states []rubix.Cube, plans [][]rubix.Move, idx []int) {
+	for i := range states {
+		if !states[i].IsSolved() && idx[i] < len(plans[i]) {
+			states[i] = states[i].Applied(plans[i][idx[i]])
+			idx[i]++
+		}
+	}
+}
+
+// countSolved returns how many of the cubes are solved.
+func countSolved(states []rubix.Cube) int {
+	k := 0
+	for i := range states {
+		if states[i].IsSolved() {
+			k++
+		}
+	}
+	return k
 }

@@ -1,13 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os/exec"
 	"runtime"
+	"time"
+
+	"github.com/spf13/cobra"
 
 	"github.com/danielriddell21/galapagos/internal/webui"
-	"github.com/spf13/cobra"
 )
 
 func init() {
@@ -28,7 +31,15 @@ func init() {
 			if openPage {
 				openBrowser(url)
 			}
-			return http.ListenAndServe(addr, webui.Handler())
+			srv := &http.Server{
+				Addr:              addr,
+				Handler:           webui.Handler(),
+				ReadHeaderTimeout: 10 * time.Second,
+			}
+			if err := srv.ListenAndServe(); err != nil {
+				return fmt.Errorf("serve: %w", err)
+			}
+			return nil
 		},
 	}
 	cmd.Flags().StringVar(&addr, "addr", "localhost:8080", "address to serve on")
@@ -40,7 +51,7 @@ func init() {
 // ignored since the URL is also printed.
 func openBrowser(url string) {
 	var cmd string
-	var args []string
+	args := make([]string, 0, 1)
 	switch runtime.GOOS {
 	case "darwin":
 		cmd = "open"
@@ -49,5 +60,5 @@ func openBrowser(url string) {
 	default:
 		cmd = "xdg-open"
 	}
-	_ = exec.Command(cmd, append(args, url)...).Start()
+	_ = exec.CommandContext(context.Background(), cmd, append(args, url)...).Start()
 }

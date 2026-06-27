@@ -5,12 +5,13 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/spf13/cobra"
+
 	"github.com/danielriddell21/galapagos/internal/agents/ga"
 	"github.com/danielriddell21/galapagos/internal/config"
 	"github.com/danielriddell21/galapagos/internal/core"
 	"github.com/danielriddell21/galapagos/internal/envs/racing"
 	"github.com/danielriddell21/galapagos/internal/sim"
-	"github.com/spf13/cobra"
 )
 
 func init() {
@@ -29,7 +30,7 @@ func init() {
 			if cfgPath != "" {
 				loaded, err := config.LoadRacing(cfgPath)
 				if err != nil {
-					return err
+					return fmt.Errorf("load racing config: %w", err)
 				}
 				cfg = loaded
 			}
@@ -67,7 +68,7 @@ func raceHeadless(c config.Racing, out string, log *slog.Logger) error {
 
 	if pop, ok := agent.(*ga.Population); ok {
 		if err := pop.SaveBest(out); err != nil {
-			return err
+			return fmt.Errorf("save best genome: %w", err)
 		}
 		fmt.Printf("saved best genome to %s\n", out)
 	}
@@ -92,13 +93,21 @@ func raceGUI(c config.Racing, out string, log *slog.Logger) error {
 		},
 	}
 	if gp, ok := agent.(*ga.Population); ok {
-		caps.save = func() error { return gp.SaveBest(out) }
+		caps.save = func() error {
+			if err := gp.SaveBest(out); err != nil {
+				return fmt.Errorf("save best genome: %w", err)
+			}
+			return nil
+		}
 		caps.load = func() error {
 			sg, err := ga.LoadGenome(out)
 			if err != nil {
-				return err
+				return fmt.Errorf("load genome: %w", err)
 			}
-			return gp.SetMemberGenome(0, sg.Genome)
+			if err := gp.SetMemberGenome(0, sg.Genome); err != nil {
+				return fmt.Errorf("set genome: %w", err)
+			}
+			return nil
 		}
 	}
 

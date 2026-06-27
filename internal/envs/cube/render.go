@@ -5,9 +5,10 @@ import (
 	"math"
 	"sort"
 
-	"github.com/danielriddell21/galapagos/internal/core"
 	rubix "github.com/danielriddell21/rubix/pkg/cube"
 	"github.com/danielriddell21/rubix/pkg/render"
+
+	"github.com/danielriddell21/galapagos/internal/core"
 )
 
 // NetW and NetH are the world size of one cube's cell, used to lay out a grid.

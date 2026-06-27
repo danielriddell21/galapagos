@@ -245,7 +245,7 @@ func (e *Env) Render(r core.Renderer) {
 		r.Line(g.A.X, g.A.Y, g.B.X, g.B.Y, color.RGBA{40, 60, 90, 255})
 	}
 	for i, b := range e.bodies {
-		c := carColor(i, e.alive[i], i == e.best)
+		c := carColor(e.alive[i], i == e.best)
 		r.Circle(b.pos.X, b.pos.Y, 6, c)
 	}
 }
@@ -260,7 +260,7 @@ func drawLoop(r core.Renderer, pts []vec, c color.Color) {
 }
 
 // carColor returns the fill color for a car given its state.
-func carColor(i int, alive, best bool) color.Color {
+func carColor(alive, best bool) color.Color {
 	switch {
 	case best:
 		return color.RGBA{255, 215, 0, 255} // gold leader

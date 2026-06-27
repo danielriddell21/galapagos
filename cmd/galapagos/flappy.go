@@ -5,9 +5,10 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/spf13/cobra"
+
 	"github.com/danielriddell21/galapagos/internal/core"
 	"github.com/danielriddell21/galapagos/internal/envs/flappy"
-	"github.com/spf13/cobra"
 )
 
 func init() {

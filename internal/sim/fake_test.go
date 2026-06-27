@@ -104,6 +104,7 @@ func (e *fakeMultiEnv) StepAll(actions []core.Action) ([]core.State, []core.Rewa
 func (e *fakeMultiEnv) ActionSpec() core.Spec {
 	return core.Spec{Dim: 1, Low: []float64{0}, High: []float64{1}}
 }
+
 func (e *fakeMultiEnv) ObservationSpec() core.Spec {
 	return core.Spec{Dim: 1, Low: []float64{0}, High: []float64{1}}
 }

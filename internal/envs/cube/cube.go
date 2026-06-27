@@ -8,8 +8,9 @@ package cube
 import (
 	"math/rand/v2"
 
-	"github.com/danielriddell21/galapagos/internal/core"
 	rubix "github.com/danielriddell21/rubix/pkg/cube"
+
+	"github.com/danielriddell21/galapagos/internal/core"
 )
 
 // Config parameters an episode.

@@ -3,8 +3,9 @@ package efficientcube
 import (
 	"math"
 
-	"github.com/danielriddell21/galapagos/internal/core"
 	rubix "github.com/danielriddell21/rubix/pkg/cube"
+
+	"github.com/danielriddell21/galapagos/internal/core"
 )
 
 // moveAction carries a cube move as a one-element action vector, matching the

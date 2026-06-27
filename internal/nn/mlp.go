@@ -122,7 +122,8 @@ func (m *MLP) Forward(x []float64) []float64 {
 // forwardCached evaluates the network, retaining per-layer activations (acts,
 // including the input) and pre-activations (zs) for backpropagation.
 func (m *MLP) forwardCached(x []float64) (out []float64, acts, zs [][]float64) {
-	acts = [][]float64{x}
+	acts = make([][]float64, 1, 1+len(m.layers))
+	acts[0] = x
 	cur := x
 	for _, ly := range m.layers {
 		z := make([]float64, ly.out)

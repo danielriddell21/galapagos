@@ -3,8 +3,9 @@ package chess
 import (
 	"math"
 
-	"github.com/danielriddell21/galapagos/internal/core"
 	gambit "github.com/danielriddell21/gambit/pkg/chess"
+
+	"github.com/danielriddell21/galapagos/internal/core"
 )
 
 // bestLegalMove decodes an action into a legal move. The action is 128

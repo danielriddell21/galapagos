@@ -55,7 +55,7 @@ func (m *MLP) Save(path string) error {
 	if err != nil {
 		return fmt.Errorf("nn: marshal: %w", err)
 	}
-	if err := os.WriteFile(path, data, 0o644); err != nil {
+	if err := os.WriteFile(path, data, 0o600); err != nil {
 		return fmt.Errorf("nn: write %q: %w", path, err)
 	}
 	return nil

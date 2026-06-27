@@ -44,43 +44,57 @@ func (p *Policy) Solve(start rubix.Cube, cfg BeamConfig) Result {
 	nodes := 0
 
 	for range cfg.MaxDepth {
-		var cands []beamNode
-		for _, bn := range beam {
-			lp := p.logProbs(bn.c)
-			for mi := range numMoves {
-				child := bn.c.Applied(rubix.Move(mi))
-				nodes++
-				path := append(slices.Clone(bn.path), rubix.Move(mi))
-				if child.IsSolved() {
-					return Result{Moves: path, Solved: true, Nodes: nodes}
-				}
-				if visited[child] {
-					continue
-				}
-				cands = append(cands, beamNode{c: child, path: path, score: bn.score + lp[mi]})
-			}
+		cands, sol, found := p.expandBeam(beam, visited, &nodes)
+		if found {
+			return sol
 		}
 		if len(cands) == 0 {
 			break
 		}
-		// Keep the highest-scoring candidates.
-		slices.SortFunc(cands, func(a, b beamNode) int {
-			switch {
-			case a.score > b.score:
-				return -1
-			case a.score < b.score:
-				return 1
-			default:
-				return 0
-			}
-		})
-		if len(cands) > cfg.Width {
-			cands = cands[:cfg.Width]
-		}
-		beam = cands
+		beam = topCandidates(cands, cfg.Width)
 		for _, c := range beam {
 			visited[c.c] = true
 		}
 	}
 	return Result{Solved: false, Nodes: nodes}
+}
+
+// expandBeam expands every beam node by all moves, returning the deduped child
+// candidates. If a child solves the cube it returns that solved Result and true.
+func (p *Policy) expandBeam(beam []beamNode, visited map[rubix.Cube]bool, nodes *int) ([]beamNode, Result, bool) {
+	var cands []beamNode
+	for _, bn := range beam {
+		lp := p.logProbs(bn.c)
+		for mi := range numMoves {
+			child := bn.c.Applied(rubix.Move(mi))
+			*nodes++
+			path := append(slices.Clone(bn.path), rubix.Move(mi))
+			if child.IsSolved() {
+				return nil, Result{Moves: path, Solved: true, Nodes: *nodes}, true
+			}
+			if visited[child] {
+				continue
+			}
+			cands = append(cands, beamNode{c: child, path: path, score: bn.score + lp[mi]})
+		}
+	}
+	return cands, Result{}, false
+}
+
+// topCandidates returns the highest-scoring width candidates.
+func topCandidates(cands []beamNode, width int) []beamNode {
+	slices.SortFunc(cands, func(a, b beamNode) int {
+		switch {
+		case a.score > b.score:
+			return -1
+		case a.score < b.score:
+			return 1
+		default:
+			return 0
+		}
+	})
+	if len(cands) > width {
+		cands = cands[:width]
+	}
+	return cands
 }

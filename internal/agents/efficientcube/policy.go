@@ -9,8 +9,9 @@ package efficientcube
 import (
 	"math"
 
-	"github.com/danielriddell21/galapagos/internal/nn"
 	rubix "github.com/danielriddell21/rubix/pkg/cube"
+
+	"github.com/danielriddell21/galapagos/internal/nn"
 )
 
 // inputDim is the one-hot encoding size: 54 facelets × 6 colors.

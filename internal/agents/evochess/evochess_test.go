@@ -4,10 +4,11 @@ import (
 	"sync"
 	"testing"
 
+	gambit "github.com/danielriddell21/gambit/pkg/chess"
+
 	"github.com/danielriddell21/galapagos/internal/core"
 	"github.com/danielriddell21/galapagos/internal/envs/chess"
 	"github.com/danielriddell21/galapagos/internal/sim"
-	gambit "github.com/danielriddell21/gambit/pkg/chess"
 )
 
 // boardState is a minimal chess state exposing the board to the search agent.

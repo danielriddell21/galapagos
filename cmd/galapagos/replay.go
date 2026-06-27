@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"iter"
 
+	"github.com/spf13/cobra"
+
 	"github.com/danielriddell21/galapagos/internal/agents/ga"
 	"github.com/danielriddell21/galapagos/internal/config"
 	"github.com/danielriddell21/galapagos/internal/core"
 	"github.com/danielriddell21/galapagos/internal/envs/racing"
 	"github.com/danielriddell21/galapagos/internal/sim"
-	"github.com/spf13/cobra"
 )
 
 func init() {
@@ -24,7 +25,7 @@ func init() {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			sg, err := ga.LoadGenome(genomePath)
 			if err != nil {
-				return err
+				return fmt.Errorf("load genome: %w", err)
 			}
 			rc := racing.DefaultConfig()
 			rc.Sensors.Count = sg.Inputs - 1

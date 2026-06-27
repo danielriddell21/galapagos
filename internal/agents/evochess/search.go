@@ -3,8 +3,9 @@ package evochess
 import (
 	"math"
 
-	"github.com/danielriddell21/galapagos/internal/core"
 	gambit "github.com/danielriddell21/gambit/pkg/chess"
+
+	"github.com/danielriddell21/galapagos/internal/core"
 )
 
 // mateScore is the magnitude returned for a decided game, far larger than any

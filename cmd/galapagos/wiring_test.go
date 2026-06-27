@@ -5,8 +5,9 @@ import (
 	"log/slog"
 	"testing"
 
-	"github.com/danielriddell21/galapagos/internal/core"
 	"github.com/spf13/cobra"
+
+	"github.com/danielriddell21/galapagos/internal/core"
 )
 
 func seedCmd() *cobra.Command {
