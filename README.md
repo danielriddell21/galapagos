@@ -1,6 +1,6 @@
 # galapagos
-> *Watch algorithms learn.*
 
+> *Watch algorithms learn.*
 
 [![CI](https://github.com/danielriddell21/galapagos/actions/workflows/ci.yaml/badge.svg)](https://github.com/danielriddell21/galapagos/actions/workflows/ci.yaml)
 [![codecov](https://codecov.io/gh/danielriddell21/galapagos/graph/badge.svg)](https://codecov.io/gh/danielriddell21/galapagos)
@@ -66,8 +66,7 @@ Requires Go 1.26 (auto-downloaded via the toolchain directive).
 go build ./cmd/galapagos
 ```
 
-## Usage
-
+## Quick start
 Train the racing demo headlessly and save the best driver:
 
 ```sh
