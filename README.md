@@ -126,3 +126,7 @@ For a browser build, `just wasm` compiles the demo to WebAssembly and stages the
 - `internal/nn` — a small pure-Go trainable MLP (backprop, Adam) used by EfficientCube
 - `internal/render` — the headless renderer and the Ebiten window
 - `cmd/galapagos` — the command-line entrypoint
+
+## Documentation
+
+- [Demos](docs/demos.md)
