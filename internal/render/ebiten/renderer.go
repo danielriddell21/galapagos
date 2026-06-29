@@ -3,7 +3,6 @@
 package ebiten
 
 import (
-	"image"
 	"image/color"
 
 	eb "github.com/hajimehoshi/ebiten/v2"
@@ -12,14 +11,6 @@ import (
 
 	"github.com/danielriddell21/galapagos/internal/core"
 )
-
-// whiteSubImage is a 1x1 white pixel sampled from the interior of a 3x3 image,
-// used as the source texture when filling polygons via DrawTriangles.
-var whiteSubImage = func() *eb.Image {
-	img := eb.NewImage(3, 3)
-	img.Fill(color.White)
-	return img.SubImage(image.Rect(1, 1, 2, 2)).(*eb.Image)
-}()
 
 // Renderer draws core primitives onto an Ebiten image. World-space shapes
 // (lines, circles, polygons) are transformed through the camera; text is drawn
@@ -52,7 +43,7 @@ func (r *Renderer) Line(x1, y1, x2, y2 float64, c color.Color) {
 // Circle implements core.Renderer, scaling the radius by the camera zoom.
 func (r *Renderer) Circle(x, y, radius float64, c color.Color) {
 	sx, sy := r.cam.WorldToScreen(x, y)
-	vector.DrawFilledCircle(r.dst, float32(sx), float32(sy), float32(radius*r.cam.Zoom), c, true)
+	vector.FillCircle(r.dst, float32(sx), float32(sy), float32(radius*r.cam.Zoom), c, true)
 }
 
 // Polygon implements core.Renderer by filling the closed shape through the
@@ -70,15 +61,9 @@ func (r *Renderer) Polygon(pts [][2]float64, c color.Color) {
 	}
 	path.Close()
 
-	cr, cg, cb, ca := c.RGBA()
-	vs, is := path.AppendVerticesAndIndicesForFilling(nil, nil)
-	for i := range vs {
-		vs[i].ColorR = float32(cr) / 0xffff
-		vs[i].ColorG = float32(cg) / 0xffff
-		vs[i].ColorB = float32(cb) / 0xffff
-		vs[i].ColorA = float32(ca) / 0xffff
-	}
-	r.dst.DrawTriangles(vs, is, whiteSubImage, &eb.DrawTrianglesOptions{AntiAlias: true})
+	op := &vector.DrawPathOptions{AntiAlias: true}
+	op.ColorScale.ScaleWithColor(c)
+	vector.FillPath(r.dst, &path, nil, op)
 }
 
 // Text implements core.Renderer, drawing in screen space for HUD overlays.
