@@ -10,6 +10,7 @@ import (
 	"github.com/danielriddell21/galapagos/internal/agents/evochess"
 	"github.com/danielriddell21/galapagos/internal/core"
 	"github.com/danielriddell21/galapagos/internal/envs/chess"
+	"github.com/danielriddell21/galapagos/internal/gui"
 	"github.com/danielriddell21/galapagos/internal/sim"
 )
 
@@ -162,7 +163,10 @@ func watchChess(pop core.PopulationAgent, maxPlies int, seed int64, agent string
 	}
 	env := chess.New(chess.Config{MaxPlies: maxPlies}) // random Black opponent
 	caps := runCaps{keymap: onlineKeymap, bounds: boundsOf(env), leader: noLeader, sensors: noSensors}
-	return launchGUI(onlineGUI("Galapagos — chess ("+agent+")", env, policyAgent{best}, maxPlies, seed, caps), log)
+	if err := gui.Run(onlineGUI("Galapagos — chess ("+agent+")", env, policyAgent{best}, maxPlies, seed, caps), log); err != nil {
+		return fmt.Errorf("run gui: %w", err)
+	}
+	return nil
 }
 
 // boolPick returns a when cond is true, else b.

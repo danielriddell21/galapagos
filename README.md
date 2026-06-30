@@ -123,7 +123,8 @@ For a browser build, `just wasm` compiles the demo to WebAssembly and stages the
 - `internal/envs` — environments (racing; cart-pole, maze, cube, flappy, and chess)
 - `internal/agents` — learning algorithms (genetic algorithm; NEAT; Q-learning; EfficientCube; evochess)
 - `internal/nn` — a small pure-Go trainable MLP (backprop, Adam) used by EfficientCube
-- `internal/render` — the headless renderer and the Ebiten window
+- `internal/render` — the backend-agnostic renderer (with the Ebiten draw backend under `internal/render/ebiten`)
+- `internal/gui` — the Ebiten window + the `Run`/`Available` seam (built only with the `ebiten` tag)
 - `cmd/galapagos` — the command-line entrypoint
 
 ## Documentation

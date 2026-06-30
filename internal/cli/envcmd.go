@@ -6,6 +6,7 @@ import (
 
 	"github.com/danielriddell21/galapagos/internal/agents/qlearning"
 	"github.com/danielriddell21/galapagos/internal/core"
+	"github.com/danielriddell21/galapagos/internal/gui"
 	"github.com/danielriddell21/galapagos/internal/sim"
 )
 
@@ -51,7 +52,10 @@ func runEnv(p envParams, log *slog.Logger) error {
 		}
 		env := p.newSingle()
 		caps := runCaps{keymap: onlineKeymap, bounds: boundsOf(env), leader: noLeader, sensors: noSensors}
-		return launchGUI(onlineGUI(p.title, env, agent, p.maxSteps, p.seed, caps), log)
+		if err := gui.Run(onlineGUI(p.title, env, agent, p.maxSteps, p.seed, caps), log); err != nil {
+			return fmt.Errorf("run gui: %w", err)
+		}
+		return nil
 	}
 
 	pop, err := newPopulationAgent(p.agent, obs, act, p.population, p.seed)
@@ -69,7 +73,10 @@ func runEnv(p envParams, log *slog.Logger) error {
 	}
 	env := sim.AsMulti(p.newSingle)
 	caps := runCaps{keymap: swarmKeymap, bounds: boundsOf(env), leader: noLeader, sensors: noSensors}
-	return launchGUI(populationGUI(p.title, env, pop, p.maxSteps, p.seed, caps), log)
+	if err := gui.Run(populationGUI(p.title, env, pop, p.maxSteps, p.seed, caps), log); err != nil {
+		return fmt.Errorf("run gui: %w", err)
+	}
+	return nil
 }
 
 // individuals collects a population's members for evaluation.

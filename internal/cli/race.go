@@ -11,6 +11,7 @@ import (
 	"github.com/danielriddell21/galapagos/internal/config"
 	"github.com/danielriddell21/galapagos/internal/core"
 	"github.com/danielriddell21/galapagos/internal/envs/racing"
+	"github.com/danielriddell21/galapagos/internal/gui"
 	"github.com/danielriddell21/galapagos/internal/sim"
 )
 
@@ -112,5 +113,8 @@ func raceGUI(c config.Racing, out string, log *slog.Logger) error {
 	}
 
 	run := populationGUI("Galapagos — race ("+c.Agent+")", env, agent, c.MaxSteps, c.Seed, caps)
-	return launchGUI(run, log)
+	if err := gui.Run(run, log); err != nil {
+		return fmt.Errorf("run gui: %w", err)
+	}
+	return nil
 }
