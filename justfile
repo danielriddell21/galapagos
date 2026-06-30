@@ -10,6 +10,15 @@ build:
 test:
     go test ./... -race
 
+# golangci-lint (default, CGO-free build).
+[group('dev')]
+lint:
+    golangci-lint run
+
+# Full gate: lint + test + build. All must pass before committing.
+[group('dev')]
+ci: lint test build
+
 # Windowed demo; requires a display and OpenGL.
 [group('run')]
 gui:

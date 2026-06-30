@@ -16,15 +16,25 @@ just gui        # run the Ebiten GUI
 just wasm       # build the WebAssembly target
 just serve      # serve the wasm build locally
 just demos      # regenerate demo assets
+just lint       # golangci-lint
+just ci         # lint + test + build
 ```
 
-Run `just --list` to see every recipe. Lint with `golangci-lint run --config .golangci.yml` and run the tests before each commit. CI runs lint + test + build on every push to `trunk` and every pull request targeting `trunk`.
+Run `just --list` to see every recipe. Run `just ci` (lint + test + build) before each commit. CI runs the same gate on every push to `trunk` and every pull request targeting `trunk`.
+
+## Conventions
+
+The CLI entrypoint and Ebiten GUI structure is shared across the tool family
+(unum is the CLI reference; rubix/vivarium the GUI references). See
+[CONVENTIONS.md](CONVENTIONS.md) before changing the entrypoint or the GUI.
 
 ## Project layout
 
 ```
 cmd/galapagos/   entry point
-internal/        implementation packages
+internal/cli/    cobra root + subcommands
+internal/gui/    Ebiten window + Run/Available seam (built with the `ebiten` tag)
+internal/        implementation packages (render, sim, envs, agents, …)
 configs/         configuration files
 docs/            documentation
 ```
