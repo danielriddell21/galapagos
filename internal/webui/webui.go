@@ -7,9 +7,6 @@ import (
 	"strings"
 )
 
-// assets holds the web directory. In a fresh checkout it contains only
-// index.html; a release (or `just wasm`) adds galapagos.wasm and wasm_exec.js.
-//
 //go:embed web
 var assets embed.FS
 
