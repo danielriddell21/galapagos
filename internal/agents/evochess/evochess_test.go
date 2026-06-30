@@ -11,14 +11,11 @@ import (
 	"github.com/danielriddell21/galapagos/internal/sim"
 )
 
-// boardState is a minimal chess state exposing the board to the search agent.
 type boardState struct{ b *gambit.Board }
 
 func (s boardState) Observation() []float64 { return nil }
 func (s boardState) Board() *gambit.Board   { return s.b }
 
-// seedGenome returns a genome with classical material and flat (zero)
-// piece-square tables, so evaluation is pure material.
 func seedGenome() []float64 {
 	g := make([]float64, genomeLen)
 	for t := range numTypes {
@@ -93,9 +90,6 @@ func TestFrozenPolicyConcurrent(t *testing.T) {
 	wg.Wait()
 }
 
-// TestCoevolutionRaceFree runs the real parallel-evaluation path — every member
-// searching against a frozen champion on its own board — under -race, to confirm
-// the shared evaluator and per-rollout boards are safe.
 func TestCoevolutionRaceFree(t *testing.T) {
 	p := New(Config{Population: 8, Depth: 2, Seed: 3})
 	champion := chess.Policy(p.FrozenPolicy())

@@ -1,6 +1,3 @@
-// Package config loads and validates run configuration from YAML. A run is
-// fully determined by these values plus the seed, satisfying the project's
-// reproducibility requirement.
 package config
 
 import (
@@ -10,10 +7,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Racing is the configuration for the racing demo and its genetic algorithm.
-// Field names match the YAML keys in configs/racing.yaml.
 type Racing struct {
-	Agent         string  `yaml:"agent"` // "ga" or "neat"
+	Agent         string  `yaml:"agent"`
 	Population    int     `yaml:"population"`
 	EliteFraction float64 `yaml:"elite_fraction"`
 	MutationRate  float64 `yaml:"mutation_rate"`
@@ -25,7 +20,6 @@ type Racing struct {
 	Seed          int64   `yaml:"seed"`
 }
 
-// DefaultRacing returns the configuration documented in the spec.
 func DefaultRacing() Racing {
 	return Racing{
 		Agent:         "ga",
@@ -41,7 +35,6 @@ func DefaultRacing() Racing {
 	}
 }
 
-// Validate reports the first invalid field, if any.
 func (c Racing) Validate() error {
 	switch {
 	case c.Agent != "ga" && c.Agent != "neat":
@@ -62,8 +55,6 @@ func (c Racing) Validate() error {
 	return nil
 }
 
-// LoadRacing reads and validates a racing config from path. Missing fields keep
-// their default values.
 func LoadRacing(path string) (Racing, error) {
 	c := DefaultRacing()
 	data, err := os.ReadFile(path)

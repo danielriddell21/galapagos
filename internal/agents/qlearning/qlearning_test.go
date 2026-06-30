@@ -42,8 +42,6 @@ func TestTemporalDifferenceUpdate(t *testing.T) {
 	}
 }
 
-// cmpState is a comparable state (an array, not a slice) so it can key the
-// Q-table directly under KeyByState.
 type cmpState [1]float64
 
 func (s cmpState) Observation() []float64 { return s[:] }

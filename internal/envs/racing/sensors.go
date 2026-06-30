@@ -2,20 +2,16 @@ package racing
 
 import "math"
 
-// SensorParams configures the raycast sensors fanned from the car's nose.
 type SensorParams struct {
-	Count    int     // number of rays
-	FOV      float64 // total fan angle in radians, centered on the heading
-	MaxRange float64 // distance at which a ray reads 1 (no wall seen)
+	Count    int
+	FOV      float64
+	MaxRange float64
 }
 
-// DefaultSensorParams returns a 7-ray, 180-degree fan.
 func DefaultSensorParams() SensorParams {
 	return SensorParams{Count: 7, FOV: math.Pi, MaxRange: 600}
 }
 
-// rayAngles returns the per-ray offsets from the car heading, spread evenly
-// across the field of view.
 func (s SensorParams) rayAngles() []float64 {
 	angles := make([]float64, s.Count)
 	if s.Count == 1 {
@@ -28,8 +24,6 @@ func (s SensorParams) rayAngles() []float64 {
 	return angles
 }
 
-// rayEndpoints returns the world-space endpoint of each sensor ray, clamped to
-// the maximum range, for the debug overlay.
 func rayEndpoints(c *car, walls [][2]vec, s SensorParams) []vec {
 	out := make([]vec, s.Count)
 	for i, off := range s.rayAngles() {
@@ -46,8 +40,6 @@ func rayEndpoints(c *car, walls [][2]vec, s SensorParams) []vec {
 	return out
 }
 
-// sense casts the sensor rays from the car and returns each ray's normalized
-// distance to the nearest wall in [0,1], where 1 means nothing within range.
 func sense(c *car, walls [][2]vec, s SensorParams) []float64 {
 	out := make([]float64, s.Count)
 	for i, off := range s.rayAngles() {

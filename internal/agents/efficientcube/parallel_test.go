@@ -16,10 +16,6 @@ func batchCubes(n int) []rubix.Cube {
 	return cs
 }
 
-// TestSolveBatchMatchesSequential checks the parallel batch solve produces the
-// same result as solving each cube sequentially. An untrained policy suffices:
-// the property must hold regardless of policy quality (and keeps the test fast
-// while still exercising concurrent Forward calls under -race).
 func TestSolveBatchMatchesSequential(t *testing.T) {
 	p := NewPolicy([]int{96}, 2)
 	cfg := BeamConfig{Width: 100, MaxDepth: 8}

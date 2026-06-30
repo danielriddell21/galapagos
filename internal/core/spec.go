@@ -2,8 +2,6 @@ package core
 
 import "fmt"
 
-// Valid reports whether the spec is internally consistent: a positive dimension
-// and bound slices whose lengths match that dimension.
 func (s Spec) Valid() error {
 	if s.Dim <= 0 {
 		return fmt.Errorf("spec: dim must be positive, got %d", s.Dim)
@@ -22,7 +20,6 @@ func (s Spec) Valid() error {
 	return nil
 }
 
-// Clamp returns v with each component constrained to the spec's bounds.
 func (s Spec) Clamp(v []float64) []float64 {
 	out := make([]float64, len(v))
 	for i := range v {

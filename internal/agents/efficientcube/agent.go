@@ -8,17 +8,10 @@ import (
 	"github.com/danielriddell21/galapagos/internal/core"
 )
 
-// moveAction carries a cube move as a one-element action vector, matching the
-// cube environment's action decoding (it rounds v[0] to a move index).
 type moveAction rubix.Move
 
-// Vector implements core.Action.
 func (a moveAction) Vector() []float64 { return []float64{float64(a)} }
 
-// Agent solves the cube with beam search over the policy. On the first step of
-// an episode it plans a full solution from the cube reconstructed out of the
-// observation, then plays it one move per step — so the simulation/GUI animate
-// the beam-found solution turning the cube to solved. It implements core.Agent.
 type Agent struct {
 	p       *Policy
 	cfg     BeamConfig
@@ -27,12 +20,10 @@ type Agent struct {
 	planned bool
 }
 
-// NewAgent returns a beam-search agent with the given search configuration.
 func NewAgent(p *Policy, cfg BeamConfig) *Agent {
 	return &Agent{p: p, cfg: cfg}
 }
 
-// Act plans on first use, then replays the solution move by move.
 func (a *Agent) Act(s core.State) core.Action {
 	if !a.planned {
 		a.plan = a.p.Solve(cubeFromObservation(s.Observation()), a.cfg).Moves
@@ -47,15 +38,11 @@ func (a *Agent) Act(s core.State) core.Action {
 	return moveAction(m)
 }
 
-// Observe is unused: the policy is trained offline.
 func (a *Agent) Observe(s core.State, act core.Action, r core.Reward, next core.State, done bool) {
 }
 
-// EndEpisode resets so the next episode re-plans.
 func (a *Agent) EndEpisode(total core.Reward) { a.planned = false; a.plan = nil; a.idx = 0 }
 
-// cubeFromObservation rebuilds the cube from the env's normalized facelet
-// observation (each component is color/5, exactly invertible).
 func cubeFromObservation(obs []float64) rubix.Cube {
 	var f rubix.Facelets
 	for i := range min(len(obs), len(f)) {

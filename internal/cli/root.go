@@ -1,4 +1,3 @@
-// Package cli wires together the root Cobra command and all subcommands.
 package cli
 
 import (
@@ -7,9 +6,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Recording flags. When recordPath is set, a windowed run captures frames from
-// the Ebiten screen and writes an animated GIF, then exits. They are read by the
-// Ebiten game (the headless paths and the non-GUI build ignore them).
 var (
 	recordPath   string
 	recordFrames int
@@ -17,7 +13,6 @@ var (
 	recordScale  int
 )
 
-// rootCmd is the base galapagos command.
 var rootCmd = &cobra.Command{
 	Use:           "galapagos",
 	Short:         "Visualize learning algorithms in real time",
@@ -35,7 +30,6 @@ func init() {
 	rootCmd.AddCommand(completionCmd())
 }
 
-// Execute builds and runs the root command. Returns non-nil on error.
 func Execute(version string) error {
 	rootCmd.Version = version
 	if err := rootCmd.Execute(); err != nil {

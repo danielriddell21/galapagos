@@ -1,8 +1,3 @@
-// Package nn is a small, deterministic, pure-Go neural network: a dense
-// multi-layer perceptron with backpropagation, Adam, and softmax/cross-entropy.
-// It exists because the genetic-algorithm net is forward-only; gradient-trained
-// agents (such as the EfficientCube policy) need real training. It imports only
-// the standard library.
 package nn
 
 import (
@@ -11,17 +6,14 @@ import (
 	"slices"
 )
 
-// Activation is a layer's nonlinearity.
 type Activation uint8
 
 const (
-	// Linear applies no nonlinearity (used for logits/regression outputs).
 	Linear Activation = iota
-	// ReLU applies max(0, x).
+
 	ReLU
 )
 
-// apply returns the activation of a pre-activation vector.
 func apply(z []float64, a Activation) []float64 {
 	out := make([]float64, len(z))
 	switch a {
@@ -35,7 +27,6 @@ func apply(z []float64, a Activation) []float64 {
 	return out
 }
 
-// deriv returns d(activation)/d(preactivation) at z.
 func deriv(z float64, a Activation) float64 {
 	if a == ReLU {
 		if z > 0 {
@@ -46,14 +37,12 @@ func deriv(z float64, a Activation) float64 {
 	return 1
 }
 
-// layer is a dense layer: weights w[i*out+j] (input i → output j), biases b[j].
 type layer struct {
 	in, out int
 	w, b    []float64
 	act     Activation
 }
 
-// MLP is a feedforward network of dense layers.
 type MLP struct {
 	layers []layer
 	sizes  []int
@@ -61,8 +50,6 @@ type MLP struct {
 	output Activation
 }
 
-// Config describes an MLP: layer sizes (input, hidden..., output), the hidden
-// and output activations, and the seed for reproducible weight initialization.
 type Config struct {
 	Sizes  []int
 	Hidden Activation
@@ -70,8 +57,6 @@ type Config struct {
 	Seed   int64
 }
 
-// New builds an MLP with seeded He/Xavier initialization. Identical configs and
-// seeds yield identical weights.
 func New(cfg Config) *MLP {
 	rng := rand.New(rand.NewPCG(uint64(cfg.Seed), 0x9e3779b97f4a7c15))
 	m := &MLP{sizes: slices.Clone(cfg.Sizes), hidden: cfg.Hidden, output: cfg.Output}
@@ -95,14 +80,10 @@ func New(cfg Config) *MLP {
 	return m
 }
 
-// InDim returns the input dimension.
 func (m *MLP) InDim() int { return m.sizes[0] }
 
-// OutDim returns the output dimension.
 func (m *MLP) OutDim() int { return m.sizes[len(m.sizes)-1] }
 
-// Forward evaluates the network and returns the output layer's values (raw
-// logits when the output activation is Linear).
 func (m *MLP) Forward(x []float64) []float64 {
 	cur := x
 	for _, ly := range m.layers {
@@ -119,8 +100,6 @@ func (m *MLP) Forward(x []float64) []float64 {
 	return cur
 }
 
-// forwardCached evaluates the network, retaining per-layer activations (acts,
-// including the input) and pre-activations (zs) for backpropagation.
 func (m *MLP) forwardCached(x []float64) (out []float64, acts, zs [][]float64) {
 	acts = make([][]float64, 1, 1+len(m.layers))
 	acts[0] = x

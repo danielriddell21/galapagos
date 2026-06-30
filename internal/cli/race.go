@@ -52,9 +52,6 @@ func init() {
 	rootCmd.AddCommand(cmd)
 }
 
-// raceHeadless evolves the population at full speed with no rendering. For the
-// genetic algorithm it also saves the best genome, which can be replayed; NEAT
-// genomes carry topology and are not yet serializable.
 func raceHeadless(c config.Racing, out string, log *slog.Logger) error {
 	agent := buildAgent(c)
 	rc := racingConfigFrom(c)
@@ -76,7 +73,6 @@ func raceHeadless(c config.Racing, out string, log *slog.Logger) error {
 	return nil
 }
 
-// raceGUI opens the windowed racing demo with the whole population on one track.
 func raceGUI(c config.Racing, out string, log *slog.Logger) error {
 	env := racing.New(racingConfigFrom(c))
 	agent := buildAgent(c)

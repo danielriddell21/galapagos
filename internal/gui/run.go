@@ -17,10 +17,8 @@ import (
 	ebrender "github.com/danielriddell21/galapagos/internal/render/ebiten"
 )
 
-// Available reports whether the Ebiten window is compiled in.
 func Available() bool { return true }
 
-// randomSeed returns a fresh non-negative seed for the GUI's regenerate control.
 func randomSeed() int64 { return int64(rand.Uint64() >> 1) }
 
 const (
@@ -28,8 +26,6 @@ const (
 	screenH = 768
 )
 
-// game is the generic Ebiten game: it drives any Config, so the same window
-// serves every environment and agent.
 type game struct {
 	run   Config
 	log   *slog.Logger
@@ -41,13 +37,11 @@ type game struct {
 	showRays bool
 	speed    int
 
-	rec   *recorder // non-nil when recording a GIF
-	pix   []byte    // reusable RGBA readback buffer
+	rec   *recorder
+	pix   []byte
 	saved bool
 }
 
-// Run opens a window driving the given config. When RecordPath is set it records
-// a GIF and exits instead of running interactively.
 func Run(run Config, log *slog.Logger) error {
 	g := &game{
 		run:   run,
@@ -68,8 +62,6 @@ func Run(run Config, log *slog.Logger) error {
 	return nil
 }
 
-// Update handles input and advances the simulation. When recording finishes it
-// writes the GIF and terminates the game loop.
 func (g *game) Update() error {
 	if g.rec != nil && g.rec.done {
 		if !g.saved {
@@ -97,7 +89,6 @@ func (g *game) Update() error {
 	return nil
 }
 
-// handleInput maps the documented controls to actions.
 func (g *game) handleInput() {
 	switch {
 	case ebinput.IsKeyJustPressed(eb.KeySpace):
@@ -133,7 +124,6 @@ func (g *game) handleInput() {
 	}
 }
 
-// Draw renders the world, HUD, sparkline, and keymap overlay.
 func (g *game) Draw(screen *eb.Image) {
 	screen.Fill(color.RGBA{18, 20, 26, 255})
 	g.ren.Begin(screen)
@@ -160,8 +150,6 @@ func (g *game) Draw(screen *eb.Image) {
 	}
 }
 
-// updateCamera follows the leader when enabled and available, otherwise frames
-// the whole world.
 func (g *game) updateCamera() {
 	cam := g.ren.Camera()
 	if g.follow {
@@ -176,7 +164,6 @@ func (g *game) updateCamera() {
 	}
 }
 
-// drawHUD draws the run's HUD lines plus speed and elapsed time, top-left.
 func (g *game) drawHUD() {
 	y := 10
 	for _, line := range g.run.HUD() {
@@ -187,7 +174,6 @@ func (g *game) drawHUD() {
 	g.ren.Text(10, float64(y+16), fmt.Sprintf("elapsed %s", time.Since(g.start).Round(time.Second)))
 }
 
-// drawKeymap lists the controls in the top-right corner.
 func (g *game) drawKeymap() {
 	y := 10
 	for _, line := range g.run.Keymap {
@@ -196,7 +182,6 @@ func (g *game) drawKeymap() {
 	}
 }
 
-// drawSparkline plots the fitness/return history in screen space, bottom-left.
 func (g *game) drawSparkline(series []float64) {
 	if len(series) < 2 {
 		return
@@ -230,7 +215,6 @@ func pausedLabel(p bool) string {
 	return ""
 }
 
-// Layout implements ebiten.Game.
 func (g *game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return screenW, screenH
 }

@@ -14,33 +14,24 @@ import (
 	"github.com/danielriddell21/galapagos/internal/sim"
 )
 
-// rawAction carries a network's raw output vector as an action.
 type rawAction []float64
 
 func (a rawAction) Vector() []float64 { return a }
 
-// policyAgent plays a fixed chess policy (no learning), for the exhibition game.
 type policyAgent struct{ p chess.Policy }
 
 func (a policyAgent) Act(s core.State) core.Action                                 { return a.p(s) }
 func (policyAgent) Observe(core.State, core.Action, core.Reward, core.State, bool) {}
 func (policyAgent) EndEpisode(core.Reward)                                         {}
 
-// bestPolicyProvider is implemented by the network population agents (ga, neat):
-// a frozen snapshot of the current best member as an observation→action forward.
 type bestPolicyProvider interface {
 	BestPolicy() func(obs []float64) []float64
 }
 
-// chessPolicyProvider is implemented by the search agent (evochess): a frozen
-// snapshot of the best member as a state→action move policy (it needs the board,
-// not just the observation).
 type chessPolicyProvider interface {
 	FrozenPolicy() func(core.State) core.Action
 }
 
-// bestChessPolicy extracts a frozen best-member policy from a population agent,
-// whether it plays by network output (ga/neat) or by search (evochess).
 func bestChessPolicy(pop core.PopulationAgent) chess.Policy {
 	switch p := pop.(type) {
 	case chessPolicyProvider:
@@ -53,9 +44,6 @@ func bestChessPolicy(pop core.PopulationAgent) chess.Policy {
 	}
 }
 
-// newChessAgent builds the chosen agent sized for chess. evochess is the
-// search-based agent (it ignores the observation/action specs and needs a search
-// depth); ga and neat reuse the generic network-agent factory.
 func newChessAgent(agent string, obs, act core.Spec, population, depth int, seed int64) (core.PopulationAgent, error) {
 	if agent == "evochess" {
 		c := evochess.DefaultConfig()
@@ -117,10 +105,6 @@ func init() {
 	rootCmd.AddCommand(cmd)
 }
 
-// evolveChess runs the evolutionary loop and returns the population (with its
-// final generation evaluated) and the best fitness reached. When coevolve is
-// set, each generation is scored against a frozen champion — the previous
-// generation's best — so the opponent strengthens alongside the population.
 func evolveChess(agent string, coevolve bool, generations, population, maxPlies, depth int, seed int64, log *slog.Logger) (core.PopulationAgent, float64, error) {
 	sample := chess.New(chess.Config{MaxPlies: maxPlies})
 	pop, err := newChessAgent(agent, sample.ObservationSpec(), sample.ActionSpec(), population, depth, seed)
@@ -154,8 +138,6 @@ func evolveChess(agent string, coevolve bool, generations, population, maxPlies,
 	return pop, maxOf(fitness), nil
 }
 
-// watchChess opens a window showing the evolved best player (White) against a
-// random opponent, looping games.
 func watchChess(pop core.PopulationAgent, maxPlies int, seed int64, agent string, log *slog.Logger) error {
 	best := bestChessPolicy(pop)
 	if best == nil {
@@ -169,7 +151,6 @@ func watchChess(pop core.PopulationAgent, maxPlies int, seed int64, agent string
 	return nil
 }
 
-// boolPick returns a when cond is true, else b.
 func boolPick(cond bool, a, b string) string {
 	if cond {
 		return a

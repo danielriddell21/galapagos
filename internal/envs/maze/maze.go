@@ -1,6 +1,3 @@
-// Package maze implements a grid-maze environment as a single-agent
-// core.Environment with discrete moves. It depends only on core, demonstrating
-// that the agent interface generalizes across very different worlds.
 package maze
 
 import (
@@ -10,7 +7,6 @@ import (
 	"github.com/danielriddell21/galapagos/internal/core"
 )
 
-// Direction indices for actions and wall bitmasks.
 const (
 	north = iota
 	east
@@ -23,25 +19,18 @@ var (
 	dy = [4]int{-1, 0, 1, 0}
 )
 
-// Config parameters the maze.
 type Config struct {
 	Width    int
 	Height   int
 	MaxSteps int
 }
 
-// DefaultConfig returns a small maze with a generous step budget.
 func DefaultConfig() Config { return Config{Width: 8, Height: 8, MaxSteps: 200} }
 
-// State is the maze observation: normalized agent position plus a wall flag in
-// each direction.
 type State struct{ obs []float64 }
 
-// Observation implements core.State.
 func (s State) Observation() []float64 { return s.obs }
 
-// Env is a grid-maze world. open[c] holds which of the four directions are
-// passable from cell c.
 type Env struct {
 	cfg   Config
 	open  [][4]bool
@@ -50,14 +39,10 @@ type Env struct {
 	done  bool
 }
 
-// New returns a maze environment.
 func New(cfg Config) *Env { return &Env{cfg: cfg} }
 
-// cell returns the linear index of grid cell (x, y).
 func (e *Env) cell(x, y int) int { return y*e.cfg.Width + x }
 
-// Reset carves a new perfect maze with a depth-first backtracker and places the
-// agent at the top-left corner.
 func (e *Env) Reset(rng *rand.Rand) core.State {
 	w, h := e.cfg.Width, e.cfg.Height
 	e.open = make([][4]bool, w*h)
@@ -89,7 +74,6 @@ func (e *Env) Reset(rng *rand.Rand) core.State {
 	return e.observe()
 }
 
-// Step moves the agent in the chosen direction if no wall blocks it.
 func (e *Env) Step(a core.Action) (core.State, core.Reward, bool) {
 	if e.done {
 		return e.observe(), 0, true
@@ -111,7 +95,6 @@ func (e *Env) Step(a core.Action) (core.State, core.Reward, bool) {
 	return e.observe(), reward, e.done
 }
 
-// observe reports normalized position and the open/blocked state of each wall.
 func (e *Env) observe() core.State {
 	w := e.open[e.cell(e.x, e.y)]
 	wall := func(d int) float64 {
@@ -127,21 +110,16 @@ func (e *Env) observe() core.State {
 	}}
 }
 
-// ActionSpec implements core.Environment: a discrete direction in [0,3].
 func (e *Env) ActionSpec() core.Spec {
 	return core.Spec{Dim: 1, Low: []float64{0}, High: []float64{3}, Discrete: true}
 }
 
-// ObservationSpec implements core.Environment.
 func (e *Env) ObservationSpec() core.Spec {
 	return core.Spec{Dim: 6, Low: make([]float64, 6), High: []float64{1, 1, 1, 1, 1, 1}}
 }
 
-// Solved reports whether the agent has reached the goal.
 func (e *Env) Solved() bool { return e.x == e.cfg.Width-1 && e.y == e.cfg.Height-1 }
 
-// Bounds returns the world bounds of the maze drawing for camera fitting. It
-// matches the cell size used by Render.
 func (e *Env) Bounds() (minX, minY, maxX, maxY float64) {
 	const s = 32.0
 	return 0, 0, float64(e.cfg.Width) * s, float64(e.cfg.Height) * s
@@ -149,7 +127,6 @@ func (e *Env) Bounds() (minX, minY, maxX, maxY float64) {
 
 var _ core.Environment = (*Env)(nil)
 
-// direction maps an action vector to a direction index in [0,3].
 func direction(a core.Action) int {
 	v := a.Vector()
 	if len(v) == 0 {
@@ -159,8 +136,6 @@ func direction(a core.Action) int {
 	return min(max(d, 0), 3)
 }
 
-// Render draws the goal cell, the maze walls, and the agent. The goal and the
-// agent light up green once the exit is reached.
 func (e *Env) Render(r core.Renderer) {
 	const s = 32.0
 	const pad = 5.0
@@ -200,7 +175,6 @@ func (e *Env) Render(r core.Renderer) {
 	r.Circle(float64(e.x)*s+s/2, float64(e.y)*s+s/2, s/3, agentCol)
 }
 
-// Status reports whether the agent has reached the goal, for the HUD.
 func (e *Env) Status() string {
 	if e.Solved() {
 		return "solved"

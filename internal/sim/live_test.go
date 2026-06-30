@@ -5,9 +5,6 @@ import (
 	"testing"
 )
 
-// TestLiveMatchesRunGeneration ensures stepping a Live to completion yields the
-// same fitness as the batch RunGeneration, so the rendered run agrees with
-// headless training.
 func TestLiveMatchesRunGeneration(t *testing.T) {
 	lifespans := []float64{3, 5, 1, 8, 2, 7}
 	batch := RunGeneration(newFakeMultiEnv(), newFakePop(lifespans...), 100, evalSeed, nil)

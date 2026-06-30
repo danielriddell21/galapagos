@@ -10,26 +10,21 @@ import (
 	"github.com/danielriddell21/galapagos/internal/sim"
 )
 
-// envParams describes a run of a single-agent environment (cart-pole or maze)
-// with any applicable agent.
 type envParams struct {
 	title     string
-	newSingle func() core.Environment // builds a fresh environment instance
-	agent     string                  // ga, neat, or qlearning
+	newSingle func() core.Environment
+	agent     string
 	seed      int64
 	headless  bool
 
-	generations int // population agents
+	generations int
 	population  int
-	episodes    int // online agents
+	episodes    int
 	maxSteps    int
-	qbins       int  // q-learning bins per observation dimension
-	qByState    bool // q-learning keys on the comparable state instead of bins
+	qbins       int
+	qByState    bool
 }
 
-// runEnv dispatches a single-agent environment to the chosen agent, headless or
-// windowed. Population agents (ga, neat) train via the multi-adapter as a swarm
-// on one shared task; the online agent (qlearning) learns one episode at a time.
 func runEnv(p envParams, log *slog.Logger) error {
 	sample := p.newSingle()
 	obs, act := sample.ObservationSpec(), sample.ActionSpec()
@@ -79,7 +74,6 @@ func runEnv(p envParams, log *slog.Logger) error {
 	return nil
 }
 
-// individuals collects a population's members for evaluation.
 func individuals(pop core.PopulationAgent) []core.Individual {
 	var out []core.Individual
 	for m := range pop.All() {
@@ -88,7 +82,6 @@ func individuals(pop core.PopulationAgent) []core.Individual {
 	return out
 }
 
-// maxOf returns the largest value in xs.
 func maxOf(xs []float64) float64 {
 	m := xs[0]
 	for _, x := range xs {

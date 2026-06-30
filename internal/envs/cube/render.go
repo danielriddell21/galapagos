@@ -11,38 +11,26 @@ import (
 	"github.com/danielriddell21/galapagos/internal/core"
 )
 
-// NetW and NetH are the world size of one cube's cell, used to lay out a grid.
 const (
 	cell = 120.0
 	NetW = cell
 	NetH = cell
 )
 
-// cam is a fixed isometric viewer for rubix's render package.
 var cam = render.Camera{Yaw: 0.6, Pitch: 0.5, Scale: 22}
 
-// bodyColor fills the cube's plastic body and tile sides so the cube reads as a
-// solid object with depth rather than floating, see-through stickers.
 var bodyColor = color.RGBA{18, 18, 22, 255}
 
-// Bounds returns the world bounds of one cube cell for camera fitting.
 func (e *Env) Bounds() (minX, minY, maxX, maxY float64) { return 0, 0, NetW, NetH }
 
-// Render draws the cube as a static 3D projection.
 func (e *Env) Render(r core.Renderer) { RenderCube(r, e.c, rubix.Move(0), 0, 0, 0) }
 
-// projQuad is one projected, depth-sorted quad ready to draw.
 type projQuad struct {
 	pts   [4][2]float64
 	col   color.Color
 	depth float32
 }
 
-// RenderCube draws cube c as a solid 3D projection with its cell's top-left
-// corner at (ox, oy). A turn in progress (frac in (0,1]) animates the moving
-// layer; frac 0 draws a still cube. It projects every poly from rubix's render
-// package — dark body and tile sides plus the coloured stickers — back-to-front,
-// so the cube is opaque with real depth.
 func RenderCube(r core.Renderer, c rubix.Cube, turn rubix.Move, frac float64, ox, oy float64) {
 	cx, cy := ox+NetW/2, oy+NetH/2
 	for _, q := range projectCube(c, turn, frac) {
@@ -54,9 +42,6 @@ func RenderCube(r core.Renderer, c rubix.Cube, turn rubix.Move, frac float64, ox
 	}
 }
 
-// projectCube projects all of a cube's polys (body, sides, stickers) into
-// depth-sorted 2D quads, mirroring rubix's Project but keeping the solid body so
-// the cube is not see-through.
 func projectCube(c rubix.Cube, turn rubix.Move, frac float64) []projQuad {
 	f := c.ToFacelets()
 	sinY, cosY := sincos(cam.Yaw)

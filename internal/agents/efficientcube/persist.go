@@ -6,7 +6,6 @@ import (
 	"github.com/danielriddell21/galapagos/internal/nn"
 )
 
-// Save writes the trained policy network to path as JSON.
 func (p *Policy) Save(path string) error {
 	if err := p.net.Save(path); err != nil {
 		return fmt.Errorf("save policy: %w", err)
@@ -14,7 +13,6 @@ func (p *Policy) Save(path string) error {
 	return nil
 }
 
-// LoadPolicy reads a policy network from path.
 func LoadPolicy(path string) (*Policy, error) {
 	m, err := nn.Load(path)
 	if err != nil {

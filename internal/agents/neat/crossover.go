@@ -6,7 +6,6 @@ import (
 	"slices"
 )
 
-// connsByInnovation indexes a genome's connections by innovation number.
 func connsByInnovation(g *genome) map[int]connGene {
 	m := make(map[int]connGene, len(g.conns))
 	for _, c := range g.conns {
@@ -15,9 +14,6 @@ func connsByInnovation(g *genome) map[int]connGene {
 	return m
 }
 
-// distance computes the NEAT compatibility distance between two genomes from
-// the number of excess and disjoint genes and the average weight difference of
-// matching genes. It is the metric used to group genomes into species.
 func distance(a, b *genome, c1, c2, c3 float64) float64 {
 	ma, mb := connsByInnovation(a), connsByInnovation(b)
 	maxA := maxInnovation(a)
@@ -65,9 +61,6 @@ func maxInnovation(g *genome) int {
 	return m
 }
 
-// crossover breeds a child from two parents. Matching genes are inherited from
-// a random parent; disjoint and excess genes come from the fitter parent
-// (parentA is assumed at least as fit as parentB).
 func crossover(a, b *genome, rng *rand.Rand) *genome {
 	mb := connsByInnovation(b)
 	child := &genome{inputs: a.inputs, outputs: a.outputs}
@@ -107,8 +100,6 @@ func crossover(a, b *genome, rng *rand.Rand) *genome {
 	return child
 }
 
-// ensureHidden adds a hidden node referenced by an inherited connection, taking
-// its definition from whichever parent declares it.
 func ensureHidden(set map[int]nodeGene, a, b *genome, id int) {
 	if _, ok := set[id]; ok {
 		return

@@ -201,8 +201,6 @@ func TestSetMemberGenome(t *testing.T) {
 	}
 }
 
-// --- test helpers ---
-
 type fakeState []float64
 
 func (s fakeState) Observation() []float64 { return s }
@@ -215,7 +213,6 @@ func collect(p *Population) []core.Individual {
 	return out
 }
 
-// assignFitness gives each member a distinct fitness so ranking is unambiguous.
 func assignFitness(p *Population) {
 	for i, m := range collect(p) {
 		m.SetFitness(core.Reward(i))

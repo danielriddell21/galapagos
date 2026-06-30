@@ -41,16 +41,11 @@ func init() {
 	rootCmd.AddCommand(cmd)
 }
 
-// replayDriver rolls a single driver out on a fresh track and returns its total
-// reward. It reuses the training loop with a population of one, so replay is
-// deterministic and matches the trained result.
 func replayDriver(rc racing.Config, d core.Individual, seed int64, maxSteps int) float64 {
 	fitness := sim.RunGeneration(racing.New(rc), singleDriverPop{d}, maxSteps, seed, nil)
 	return fitness[0]
 }
 
-// singleDriverPop adapts one driver to the PopulationAgent interface so it can
-// be replayed through the standard simulation loop.
 type singleDriverPop [1]core.Individual
 
 func (p singleDriverPop) Act(s core.State) core.Action { return p[0].Act(s) }

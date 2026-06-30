@@ -8,9 +8,6 @@ import (
 	"github.com/danielriddell21/galapagos/internal/sim"
 )
 
-// TestQLearningSolvesShallowScramble trains tabular Q-learning, keyed on the
-// comparable cube state, to solve a fixed shallow scramble. The final near-greedy
-// episode must solve (positive return after the small per-move cost).
 func TestQLearningSolvesShallowScramble(t *testing.T) {
 	env := cube.New(cube.Config{ScrambleDepth: 3, MaxSteps: 8})
 	agent := qlearning.New(qlearning.Config{

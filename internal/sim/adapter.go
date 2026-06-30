@@ -6,9 +6,6 @@ import (
 	"github.com/danielriddell21/galapagos/internal/core"
 )
 
-// multiAdapter presents a collection of independent single-agent environments
-// as one MultiEnvironment, so population agents can train on environments such
-// as cart-pole and maze without any change to the agent or the loop.
 type multiAdapter struct {
 	make   func() core.Environment
 	bodies []core.Environment
@@ -16,9 +13,6 @@ type multiAdapter struct {
 	alive  int
 }
 
-// AsMulti adapts a single-agent environment constructor into a MultiEnvironment.
-// Each body is an independent environment instance, mirroring the per-member
-// rollout used for the racing population so the determinism guarantees hold.
 func AsMulti(mk func() core.Environment) core.MultiEnvironment {
 	return &multiAdapter{make: mk}
 }
@@ -57,10 +51,6 @@ func (m *multiAdapter) StepAll(actions []core.Action) (states []core.State, rewa
 	return states, rewards, m.done
 }
 
-// BodyStatus returns body i's status string when the underlying environment
-// exposes one (e.g. flappy's pipes-cleared count), for the HUD to show the
-// leader's progress. It reports false when i is out of range or the body has no
-// Status method.
 func (m *multiAdapter) BodyStatus(i int) (string, bool) {
 	if i < 0 || i >= len(m.bodies) {
 		return "", false
@@ -83,9 +73,6 @@ func (m *multiAdapter) Render(r core.Renderer) {
 	}
 }
 
-// Bounds forwards the world bounds of a representative body, so a population
-// running on an adapted single-agent environment can still fit the camera. It
-// reports false when the underlying environment does not expose bounds.
 func (m *multiAdapter) Bounds() (minX, minY, maxX, maxY float64, ok bool) {
 	var probe core.Environment
 	if len(m.bodies) > 0 {

@@ -18,10 +18,6 @@ import (
 
 var cubeKeymap = []string{"space pause", "+/- speed", "r new scrambles"}
 
-// coupleScramble raises the training depth and search horizon to cover a
-// scramble of the given target depth, never shrinking values the user set
-// higher. The horizon keeps a small margin above the scramble so the solver can
-// still find a slightly suboptimal solution.
 func coupleScramble(target, scrambleK, maxDepth int) (k, depth int) {
 	if scrambleK < target {
 		scrambleK = target
@@ -104,8 +100,6 @@ func init() {
 	rootCmd.AddCommand(cmd)
 }
 
-// loadOrTrainPolicy loads a saved policy when requested, otherwise trains one and
-// optionally saves it.
 func loadOrTrainPolicy(model string, train bool, cfg efficientcube.TrainConfig, log *slog.Logger) (*efficientcube.Policy, error) {
 	if model != "" && !train {
 		log.Info("loading policy", "path", model)
@@ -128,7 +122,6 @@ func loadOrTrainPolicy(model string, train bool, cfg efficientcube.TrainConfig, 
 	return p, nil
 }
 
-// reportCubeEval beam-solves N scrambles in parallel and prints aggregate stats.
 func reportCubeEval(p *efficientcube.Policy, depth, n int, beam efficientcube.BeamConfig, seed int64) {
 	scrambles := make([]rubix.Cube, n)
 	for i := range n {
@@ -154,8 +147,6 @@ func reportCubeEval(p *efficientcube.Policy, depth, n int, beam efficientcube.Be
 		depth, solved, n, 100*float64(solved)/float64(n), avgLen, totNodes/n, elapsed.Round(time.Millisecond))
 }
 
-// cubeWall opens a window showing a grid of cubes being solved in parallel: the
-// solutions are computed concurrently with SolveBatch, then animated together.
 func cubeWall(p *efficientcube.Policy, beam efficientcube.BeamConfig, count, depth int, seed int64, log *slog.Logger) error {
 	const gap = cube.NetW * 0.15
 	cols := int(math.Ceil(math.Sqrt(float64(count))))
@@ -232,7 +223,6 @@ func cubeWall(p *efficientcube.Policy, beam efficientcube.BeamConfig, count, dep
 	return nil
 }
 
-// cubesPending reports whether any cube still has a planned move left to play.
 func cubesPending(states []rubix.Cube, plans [][]rubix.Move, idx []int) bool {
 	for i := range states {
 		if !states[i].IsSolved() && idx[i] < len(plans[i]) {
@@ -242,7 +232,6 @@ func cubesPending(states []rubix.Cube, plans [][]rubix.Move, idx []int) bool {
 	return false
 }
 
-// advanceCubes applies the next planned move to every cube that still has one.
 func advanceCubes(states []rubix.Cube, plans [][]rubix.Move, idx []int) {
 	for i := range states {
 		if !states[i].IsSolved() && idx[i] < len(plans[i]) {
@@ -252,7 +241,6 @@ func advanceCubes(states []rubix.Cube, plans [][]rubix.Move, idx []int) {
 	}
 }
 
-// countSolved returns how many of the cubes are solved.
 func countSolved(states []rubix.Cube) int {
 	k := 0
 	for i := range states {

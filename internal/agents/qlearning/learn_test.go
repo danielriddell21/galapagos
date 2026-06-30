@@ -10,9 +10,6 @@ import (
 	"github.com/danielriddell21/galapagos/internal/sim"
 )
 
-// TestBalancesCartpole trains tabular Q-learning on cart-pole and requires the
-// balanced duration to grow, showing the agent generalizes to a second discrete
-// task via observation binning.
 func TestBalancesCartpole(t *testing.T) {
 	env := cartpole.New(cartpole.Config{MaxSteps: 500})
 	agent := qlearning.New(qlearning.Config{
@@ -37,9 +34,6 @@ func TestBalancesCartpole(t *testing.T) {
 	}
 }
 
-// TestLearnsMaze trains tabular Q-learning on a fixed maze and requires it to
-// improve and ultimately solve the maze, demonstrating that the Agent interface
-// supports a learning paradigm entirely different from the genetic algorithm.
 func TestLearnsMaze(t *testing.T) {
 	env := maze.New(maze.Config{Width: 6, Height: 6, MaxSteps: 300})
 	agent := qlearning.New(qlearning.Config{

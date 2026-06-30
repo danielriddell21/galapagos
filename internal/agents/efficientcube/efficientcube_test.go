@@ -49,9 +49,6 @@ func TestSolveSolvedIsNoop(t *testing.T) {
 	}
 }
 
-// TestLearnsAndSolves trains a single small policy and checks both that beam
-// search solves held-out scrambles and that the greedy live agent solves a
-// shallow scramble end to end. Reusing one trained policy keeps the test fast.
 func TestLearnsAndSolves(t *testing.T) {
 	p := Train(TrainConfig{Hidden: []int{128, 64}, K: 5, Batch: 256, Iters: 1000, LR: 1e-3, Seed: 1}, nil)
 
@@ -109,8 +106,6 @@ func TestSaveLoadRoundTrip(t *testing.T) {
 	}
 }
 
-// stubState/faceletObs mimic the cube env's observation (color/5) without
-// importing the env package.
 type stubState []float64
 
 func (s stubState) Observation() []float64 { return s }

@@ -12,13 +12,10 @@ import (
 
 func newRNG() *rand.Rand { return rand.New(rand.NewPCG(1, 2)) }
 
-// prefs is an action vector of move preferences.
 type prefs []float64
 
 func (p prefs) Vector() []float64 { return p }
 
-// toSquare wants the agent to move a piece to the given square: it sets that
-// "to" preference high and leaves the rest at zero.
 func toSquare(s gambit.Square) prefs {
 	v := make(prefs, 128)
 	v[64+int(s)] = 1

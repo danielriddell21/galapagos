@@ -47,8 +47,6 @@ func init() {
 	rootCmd.AddCommand(cmd)
 }
 
-// openBrowser best-effort opens url in the default browser; failures are
-// ignored since the URL is also printed.
 func openBrowser(url string) {
 	var cmd string
 	args := make([]string, 0, 1)

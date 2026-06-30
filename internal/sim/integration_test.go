@@ -44,10 +44,6 @@ func members(p *ga.Population) []core.Individual {
 	return out
 }
 
-// TestSimultaneousEqualsParallelOnRacing locks the property the determinism
-// contract depends on: cars only collide with walls, so evaluating the whole
-// population together on one track yields exactly the same fitness as rolling
-// each car out alone.
 func TestSimultaneousEqualsParallelOnRacing(t *testing.T) {
 	sequential := sim.RunGeneration(racing.New(racing.DefaultConfig()), ga.New(gaConfig()), itMaxSteps, itSeed, nil)
 	parallel := sim.EvaluateParallel(racingFactory(), members(ga.New(gaConfig())), itMaxSteps, itSeed)
@@ -56,8 +52,6 @@ func TestSimultaneousEqualsParallelOnRacing(t *testing.T) {
 	}
 }
 
-// TestParallelDeterministicAcrossWorkers verifies fitness is independent of the
-// worker count.
 func TestParallelDeterministicAcrossWorkers(t *testing.T) {
 	old := runtime.GOMAXPROCS(1)
 	defer runtime.GOMAXPROCS(old)
@@ -69,8 +63,6 @@ func TestParallelDeterministicAcrossWorkers(t *testing.T) {
 	}
 }
 
-// TestHeadlessTrainingReproducible trains the GA end to end twice and requires
-// the evolved best genome to be byte-identical, regardless of GOMAXPROCS.
 func TestHeadlessTrainingReproducible(t *testing.T) {
 	train := func(workers int) []float64 {
 		old := runtime.GOMAXPROCS(workers)
@@ -84,10 +76,6 @@ func TestHeadlessTrainingReproducible(t *testing.T) {
 	}
 }
 
-// TestGAonCartpoleUnchanged runs the genetic algorithm on cart-pole through the
-// single-to-multi adapter with no change to the ga package, proving the agent
-// and environment interfaces are decoupled. The evolved best must beat the
-// initial population's best.
 func TestGAonCartpoleUnchanged(t *testing.T) {
 	newEnv := func() core.MultiEnvironment {
 		return sim.AsMulti(func() core.Environment { return cartpole.New(cartpole.DefaultConfig()) })

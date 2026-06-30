@@ -7,18 +7,14 @@ import (
 	"github.com/danielriddell21/galapagos/internal/core"
 )
 
-// fakeState carries a single scalar observation.
 type fakeState struct{ x float64 }
 
 func (s fakeState) Observation() []float64 { return []float64{s.x} }
 
-// fakeAction carries a single scalar control.
 type fakeAction struct{ v float64 }
 
 func (a fakeAction) Vector() []float64 { return []float64{a.v} }
 
-// fakeIndividual is a member whose constant policy advances a counter; its
-// fitness is the number of steps it survives, which is genome[0] steps.
 type fakeIndividual struct {
 	genome  []float64
 	fitness core.Reward
@@ -29,8 +25,6 @@ func (m *fakeIndividual) Fitness() core.Reward         { return m.fitness }
 func (m *fakeIndividual) SetFitness(r core.Reward)     { m.fitness = r }
 func (m *fakeIndividual) Genome() []float64            { return m.genome }
 
-// fakePop is a fixed population that never actually evolves; it is enough to
-// exercise the loop and evaluation paths.
 type fakePop struct {
 	members []*fakeIndividual
 	gen     int
@@ -60,10 +54,6 @@ func (p *fakePop) All() iter.Seq[core.Individual] {
 	}
 }
 
-// fakeMultiEnv earns each body reward 1 per step until it has lived for as many
-// steps as the member's action value requests, then marks it done. Because a
-// body's outcome depends only on its own member's action, simultaneous and
-// per-body rollouts must agree, mirroring the cars-never-interact property.
 type fakeMultiEnv struct {
 	step  []int
 	done  []bool

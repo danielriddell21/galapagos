@@ -6,35 +6,25 @@ import (
 	rubix "github.com/danielriddell21/rubix/pkg/cube"
 )
 
-// BeamConfig parameters beam search over the policy.
 type BeamConfig struct {
-	Width    int // beam width (candidates kept per depth)
-	MaxDepth int // maximum solution length searched
+	Width    int
+	MaxDepth int
 }
 
-// DefaultBeamConfig returns a balanced search configuration.
 func DefaultBeamConfig() BeamConfig { return BeamConfig{Width: 1000, MaxDepth: 26} }
 
-// Result is the outcome of a solve attempt.
 type Result struct {
 	Moves  []rubix.Move
 	Solved bool
 	Nodes  int
 }
 
-// beamNode is a partial solution: a cube, the moves taken to reach it, and the
-// cumulative log-probability the policy assigned to those moves.
 type beamNode struct {
 	c     rubix.Cube
 	path  []rubix.Move
 	score float64
 }
 
-// Solve searches for a solution from start using beam search guided by the
-// policy: at each depth it expands every beam node by all moves, scores children
-// by cumulative policy log-probability, dedupes already-seen cubes, and keeps the
-// top Width. It returns the first solution found or an unsolved result if the
-// depth budget is exhausted.
 func (p *Policy) Solve(start rubix.Cube, cfg BeamConfig) Result {
 	if start.IsSolved() {
 		return Result{Solved: true}
@@ -59,8 +49,6 @@ func (p *Policy) Solve(start rubix.Cube, cfg BeamConfig) Result {
 	return Result{Solved: false, Nodes: nodes}
 }
 
-// expandBeam expands every beam node by all moves, returning the deduped child
-// candidates. If a child solves the cube it returns that solved Result and true.
 func (p *Policy) expandBeam(beam []beamNode, visited map[rubix.Cube]bool, nodes *int) ([]beamNode, Result, bool) {
 	var cands []beamNode
 	for _, bn := range beam {
@@ -81,7 +69,6 @@ func (p *Policy) expandBeam(beam []beamNode, visited map[rubix.Cube]bool, nodes 
 	return cands, Result{}, false
 }
 
-// topCandidates returns the highest-scoring width candidates.
 func topCandidates(cands []beamNode, width int) []beamNode {
 	slices.SortFunc(cands, func(a, b beamNode) int {
 		switch {

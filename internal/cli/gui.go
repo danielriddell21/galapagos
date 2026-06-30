@@ -8,8 +8,6 @@ import (
 	"github.com/danielriddell21/galapagos/internal/sim"
 )
 
-// runCaps holds the environment-specific capabilities a command supplies when
-// assembling a run.
 type runCaps struct {
 	keymap  []string
 	bounds  func() (minX, minY, maxX, maxY float64, ok bool)
@@ -19,8 +17,6 @@ type runCaps struct {
 	load    func() error
 }
 
-// recordConfig returns the GIF-recording settings from the shared --record
-// flags, applied to every assembled run.
 func recordConfig() gui.Config {
 	return gui.Config{
 		RecordPath:   recordPath,
@@ -30,8 +26,6 @@ func recordConfig() gui.Config {
 	}
 }
 
-// populationGUI assembles a run that evolves a population on a multi-environment,
-// driven frame by frame by sim.Live.
 func populationGUI(title string, env core.MultiEnvironment, pop core.PopulationAgent, maxSteps int, seed int64, caps runCaps) gui.Config {
 	live := sim.NewLive(env, pop, maxSteps, seed)
 	tel := sim.NewTelemetry(4096, nil)
@@ -75,8 +69,6 @@ func populationGUI(title string, env core.MultiEnvironment, pop core.PopulationA
 	return cfg
 }
 
-// onlineGUI assembles a run that trains a single online agent on an environment,
-// one episode at a time, driven by sim.LiveEpisode.
 func onlineGUI(title string, env core.Environment, agent core.Agent, maxSteps int, seed int64, caps runCaps) gui.Config {
 	ep := sim.NewLiveEpisode(env, agent, maxSteps, seed)
 	var returns []float64
@@ -114,8 +106,6 @@ func onlineGUI(title string, env core.Environment, agent core.Agent, maxSteps in
 	return cfg
 }
 
-// boundsOf returns a bounds closure for any environment that exposes a Bounds
-// method (single-agent envs return four values; the multi-adapter returns five).
 func boundsOf(env any) func() (float64, float64, float64, float64, bool) {
 	if b, ok := env.(interface {
 		Bounds() (float64, float64, float64, float64)
@@ -133,7 +123,5 @@ func boundsOf(env any) func() (float64, float64, float64, float64, bool) {
 	return func() (float64, float64, float64, float64, bool) { return 0, 0, 0, 0, false }
 }
 
-// noLeader and noSensors are default capabilities for environments without a
-// followable leader or sensor overlay.
 func noLeader(int) (float64, float64, bool)        { return 0, 0, false }
 func noSensors(int) (core.Vec2, []core.Vec2, bool) { return core.Vec2{}, nil, false }

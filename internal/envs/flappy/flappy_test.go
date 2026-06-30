@@ -9,7 +9,6 @@ import (
 
 func newRNG() *rand.Rand { return rand.New(rand.NewPCG(1, 2)) }
 
-// act is a one-element action vector selecting a discrete action.
 type act float64
 
 func (a act) Vector() []float64 { return []float64{float64(a)} }
