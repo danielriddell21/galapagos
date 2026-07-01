@@ -1,10 +1,6 @@
 github.com/cpuguy83/go-md2man/v2 v2.0.6/go.mod h1:oOW0eioCTA6cOiMLiUPZOpcVxMig6NIQQ7OS05n1F4g=
-github.com/danielriddell21/gambit v0.0.0-20260608223531-e066e9b32899 h1:ovGeaC45kzkqhVOlBraY76SEMfxKriuqWtGseSKy2ss=
-github.com/danielriddell21/gambit v0.0.0-20260608223531-e066e9b32899/go.mod h1:SuZKzXqyhVICGNd4WVroG3Ta1pVGYK40rxF4qrfeNjc=
-github.com/danielriddell21/rubix v0.0.0-20260606223000-b5624a236b98 h1:nHvOkAjuVHz9cIj2qzuc1ehatrr/90hRl8a6w1Z7Il8=
-github.com/danielriddell21/rubix v0.0.0-20260606223000-b5624a236b98/go.mod h1:1G61gIrtUH0i6SzvoHRTpoRCFNl9ho+8VajXsT0W/jE=
-github.com/danielriddell21/rubix v0.0.0-20260614083345-58152422784a h1:LrXI0eMENGkzd+qdhu6OGLGfs+TcsEGaCq2WgyzBu9A=
-github.com/danielriddell21/rubix v0.0.0-20260614083345-58152422784a/go.mod h1:1G61gIrtUH0i6SzvoHRTpoRCFNl9ho+8VajXsT0W/jE=
+github.com/danielriddell21/gambit v0.0.2 h1:fK4XfjrPCGLq2uq0Ft9S6dV+aknC1Fo8LXmWsqU6+/0=
+github.com/danielriddell21/gambit v0.0.2/go.mod h1:t9Kb5A5nn/DOTiCtWug4tYL/rMPbfgHHexf2RLKM/og=
 github.com/danielriddell21/rubix v0.0.0-20260614092341-1d6b2d8ae34c h1:8qdATJp96CvxTK5JI3EiVNRgvtw/24MAjCzO8qSpsfE=
 github.com/danielriddell21/rubix v0.0.0-20260614092341-1d6b2d8ae34c/go.mod h1:1G61gIrtUH0i6SzvoHRTpoRCFNl9ho+8VajXsT0W/jE=
 github.com/ebitengine/gomobile v0.0.0-20250923094054-ea854a63cce1 h1:+kz5iTT3L7uU+VhlMfTb8hHcxLO3TlaELlX8wa4XjA0=
@@ -25,10 +21,10 @@ github.com/spf13/cobra v1.10.2/go.mod h1:7C1pvHqHw5A4vrJfjNwvOdzYu0Gml16OCs2GRiT
 github.com/spf13/pflag v1.0.9 h1:9exaQaMOCwffKiiiYk6/BndUBv+iRViNW+4lEMi0PvY=
 github.com/spf13/pflag v1.0.9/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
 go.yaml.in/yaml/v3 v3.0.4/go.mod h1:DhzuOOF2ATzADvBadXxruRBLzYTpT36CKvDb3+aBEFg=
-golang.org/x/image v0.31.0 h1:mLChjE2MV6g1S7oqbXC0/UcKijjm5fnJLUYKIYrLESA=
-golang.org/x/image v0.31.0/go.mod h1:R9ec5Lcp96v9FTF+ajwaH3uGxPH4fKfHHAVbUILxghA=
-golang.org/x/sync v0.17.0 h1:l60nONMj9l5drqw6jlhIELNv9I0A4OFgRsG9k2oT9Ug=
-golang.org/x/sync v0.17.0/go.mod h1:9KTHXmSnoGruLpwFjVSX0lNNA75CykiMECbovNTZqGI=
+golang.org/x/image v0.42.0 h1:1gSs6ehNWXLbkHBIPcWztk3D/6aIA/8hauiAYtlodVY=
+golang.org/x/image v0.42.0/go.mod h1:rrpelvGFt+kLPAjPM4HeWPgrl0FtafueU//e5N0qk/Q=
+golang.org/x/sync v0.21.0 h1:HLII4xRRTtCRkxYp4HNFF0Js/Og6q2i++KXbg0gHCwM=
+golang.org/x/sync v0.21.0/go.mod h1:9xrNwdLfx4jkKbNva9FpL6vEN7evnE43NNNJQ2LF3+0=
 golang.org/x/sys v0.36.0 h1:KVRy2GtZBrk1cBYA7MKu5bEZFxQk4NIDV6RLVcC8o0k=
 golang.org/x/sys v0.36.0/go.mod h1:OgkHotnGiDImocRcuBABYBEXf8A9a87e/uXjp9XT3ks=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+SDo693bJlVdllGtEeKM=

@@ -3,7 +3,7 @@ module github.com/danielriddell21/galapagos
 go 1.26.3
 
 require (
-	github.com/danielriddell21/gambit v0.0.0-20260608223531-e066e9b32899
+	github.com/danielriddell21/gambit v0.0.2
 	github.com/danielriddell21/rubix v0.0.0-20260614092341-1d6b2d8ae34c
 	github.com/hajimehoshi/ebiten/v2 v2.9.9
 	github.com/spf13/cobra v1.10.2
@@ -17,6 +17,6 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jezek/xgb v1.1.1 // indirect
 	github.com/spf13/pflag v1.0.9 // indirect
-	golang.org/x/sync v0.17.0 // indirect
+	golang.org/x/sync v0.21.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect
 )
