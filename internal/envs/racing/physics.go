@@ -2,17 +2,14 @@ package racing
 
 import "math"
 
-// CarParams configures the arcade car model. The dynamics are deliberately
-// simple: no tyre model, just heading, speed, friction, and turn rate.
 type CarParams struct {
-	MaxSpeed float64 // maximum forward speed
-	Accel    float64 // acceleration per unit throttle
-	TurnRate float64 // maximum heading change per second at full steering
-	Drag     float64 // fractional speed lost per second
-	Dt       float64 // integration timestep
+	MaxSpeed float64
+	Accel    float64
+	TurnRate float64
+	Drag     float64
+	Dt       float64
 }
 
-// DefaultCarParams returns a playable arcade configuration.
 func DefaultCarParams() CarParams {
 	return CarParams{
 		MaxSpeed: 320,
@@ -23,21 +20,16 @@ func DefaultCarParams() CarParams {
 	}
 }
 
-// car is one vehicle's kinematic state.
 type car struct {
 	pos     vec
-	heading float64 // radians
+	heading float64
 	speed   float64
 }
 
-// dir returns the car's unit forward vector.
 func (c *car) dir() vec {
 	return vec{math.Cos(c.heading), math.Sin(c.heading)}
 }
 
-// advance integrates one timestep given steering in [-1,1] and throttle in
-// [0,1], and returns the previous position so the caller can test the swept
-// segment for wall collisions.
 func (c *car) advance(steering, throttle float64, p CarParams) (prev vec) {
 	prev = c.pos
 	steering = min(max(steering, -1), 1)

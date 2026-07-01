@@ -7,19 +7,8 @@ import (
 	"github.com/danielriddell21/galapagos/internal/core"
 )
 
-// EnvFactory builds a fresh multi-environment instance. Each call must yield an
-// independent environment with no shared mutable state, so concurrent rollouts
-// cannot race or influence one another.
 type EnvFactory func() core.MultiEnvironment
 
-// EvaluateParallel scores each member by rolling it out alone on its own
-// environment instance, fanning the work across a pool sized to
-// runtime.GOMAXPROCS(0). Every rollout regenerates the identical track from
-// seed, so results are independent of the worker count and match the
-// simultaneous rollout in RunGeneration.
-//
-// Results are written by index into a preallocated slice, so completion order
-// does not affect the outcome. This is the turbo/headless training path.
 func EvaluateParallel(newEnv EnvFactory, members []core.Individual, maxSteps int, seed int64) []float64 {
 	n := len(members)
 	fitness := make([]float64, n)
@@ -41,8 +30,6 @@ func EvaluateParallel(newEnv EnvFactory, members []core.Individual, maxSteps int
 	return fitness
 }
 
-// rolloutOne runs a single member alone on env for at most maxSteps and returns
-// its accumulated reward.
 func rolloutOne(env core.MultiEnvironment, member core.Individual, maxSteps int, seed int64) float64 {
 	states := env.ResetAll(1, TrackRNG(seed))
 	actions := make([]core.Action, 1)

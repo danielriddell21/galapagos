@@ -1,8 +1,10 @@
-# Galapagos
+# galapagos
+
+> *Watch algorithms learn.*
 
 [![CI](https://github.com/danielriddell21/galapagos/actions/workflows/ci.yaml/badge.svg)](https://github.com/danielriddell21/galapagos/actions/workflows/ci.yaml)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=danielriddell21_galapagos&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=danielriddell21_galapagos)
 [![codecov](https://codecov.io/gh/danielriddell21/galapagos/graph/badge.svg)](https://codecov.io/gh/danielriddell21/galapagos)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=danielriddell21_galapagos&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=danielriddell21_galapagos)
 [![Go 1.26](https://img.shields.io/badge/go-1.26-blue)](https://go.dev)
 [![MIT License](https://img.shields.io/badge/licence-MIT-green)](LICENSE)
 
@@ -64,8 +66,7 @@ Requires Go 1.26 (auto-downloaded via the toolchain directive).
 go build ./cmd/galapagos
 ```
 
-## Usage
-
+## Quick start
 Train the racing demo headlessly and save the best driver:
 
 ```sh
@@ -122,5 +123,10 @@ For a browser build, `just wasm` compiles the demo to WebAssembly and stages the
 - `internal/envs` — environments (racing; cart-pole, maze, cube, flappy, and chess)
 - `internal/agents` — learning algorithms (genetic algorithm; NEAT; Q-learning; EfficientCube; evochess)
 - `internal/nn` — a small pure-Go trainable MLP (backprop, Adam) used by EfficientCube
-- `internal/render` — the headless renderer and the Ebiten window
+- `internal/render` — the backend-agnostic renderer (with the Ebiten draw backend under `internal/render/ebiten`)
+- `internal/gui` — the Ebiten window + the `Run`/`Available` seam (built only with the `ebiten` tag)
 - `cmd/galapagos` — the command-line entrypoint
+
+## Documentation
+
+- [Demos](docs/demos.md)

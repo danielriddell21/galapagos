@@ -10,12 +10,10 @@ import (
 
 const evalSeed = 42
 
-// factory returns an EnvFactory producing independent fake environments.
 func factory() EnvFactory {
 	return func() core.MultiEnvironment { return newFakeMultiEnv() }
 }
 
-// membersOf collects a fake population's members as core.Individual values.
 func membersOf(p *fakePop) []core.Individual {
 	out := make([]core.Individual, len(p.members))
 	for i, m := range p.members {

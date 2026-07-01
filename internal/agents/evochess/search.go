@@ -3,16 +3,13 @@ package evochess
 import (
 	"math"
 
-	"github.com/danielriddell21/galapagos/internal/core"
 	gambit "github.com/danielriddell21/gambit/pkg/chess"
+
+	"github.com/danielriddell21/galapagos/internal/core"
 )
 
-// mateScore is the magnitude returned for a decided game, far larger than any
-// material evaluation so checkmates dominate the search.
 const mateScore = 1e6
 
-// search returns the minimax value of b to depth, from White's perspective,
-// with alpha-beta pruning. White maximizes, Black minimizes.
 func (e *evaluator) search(b *gambit.Board, depth int, alpha, beta float64) float64 {
 	if res, _ := b.Status(); res != gambit.InProgress {
 		switch res {
@@ -50,9 +47,6 @@ func (e *evaluator) search(b *gambit.Board, depth int, alpha, beta float64) floa
 	return val
 }
 
-// bestMove returns the side-to-move's best move under an alpha-beta search of the
-// given depth, resolving ties to the first move for determinism. It assumes b is
-// not already terminal.
 func bestMove(e *evaluator, b *gambit.Board, depth int) gambit.Move {
 	moves := b.LegalMoves()
 	if len(moves) == 0 {
@@ -73,15 +67,10 @@ func bestMove(e *evaluator, b *gambit.Board, depth int) gambit.Move {
 	return best
 }
 
-// action carries a move as a from/to preference vector the chess environment
-// decodes back into that move.
 type action []float64
 
 func (a action) Vector() []float64 { return a }
 
-// encodeMove turns a chosen move into the chess environment's 128-element action
-// (64 "from" + 64 "to" preferences) in the side-to-move's perspective, spiking
-// the chosen move's squares so the environment decodes back to exactly this move.
 func encodeMove(b *gambit.Board, m gambit.Move) core.Action {
 	v := make(action, 128)
 	if m == gambit.NoMove {
@@ -93,9 +82,6 @@ func encodeMove(b *gambit.Board, m gambit.Move) core.Action {
 	return v
 }
 
-// perspective maps a square to its index from c's point of view, matching the
-// chess environment's action decoding: identity for White, rank-mirrored for
-// Black.
 func perspective(s gambit.Square, c gambit.Color) int {
 	if c == gambit.White {
 		return int(s)

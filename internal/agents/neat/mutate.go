@@ -5,8 +5,6 @@ import (
 	"slices"
 )
 
-// mutateWeights perturbs each connection weight with Gaussian noise at the
-// given rate, occasionally replacing a weight outright.
 func mutateWeights(g *genome, rate, std float64, rng *rand.Rand) {
 	for i := range g.conns {
 		if rng.Float64() >= rate {
@@ -20,7 +18,6 @@ func mutateWeights(g *genome, rate, std float64, rng *rand.Rand) {
 	}
 }
 
-// hasConn reports whether a from→to connection already exists.
 func (g *genome) hasConn(from, to int) bool {
 	for _, c := range g.conns {
 		if c.from == from && c.to == to {
@@ -30,8 +27,6 @@ func (g *genome) hasConn(from, to int) bool {
 	return false
 }
 
-// sources returns ids that may originate a connection: inputs, the bias node,
-// and hidden nodes.
 func (g *genome) sources() []int {
 	var ids []int
 	for _, n := range g.nodes {
@@ -42,7 +37,6 @@ func (g *genome) sources() []int {
 	return ids
 }
 
-// targets returns ids that may receive a connection: hidden and output nodes.
 func (g *genome) targets() []int {
 	var ids []int
 	for _, n := range g.nodes {
@@ -53,8 +47,6 @@ func (g *genome) targets() []int {
 	return ids
 }
 
-// addConnection adds a new acyclic connection between two unconnected nodes, if
-// a valid pair is found within a few attempts.
 func addConnection(g *genome, inno *innovations, rng *rand.Rand) {
 	srcs, dsts := g.sources(), g.targets()
 	if len(srcs) == 0 || len(dsts) == 0 {
@@ -77,8 +69,6 @@ func addConnection(g *genome, inno *innovations, rng *rand.Rand) {
 	}
 }
 
-// addNode splits a random enabled connection in two with a new hidden node, the
-// classic NEAT structural mutation that preserves behavior initially.
 func addNode(g *genome, inno *innovations, rng *rand.Rand) {
 	enabled := enabledConns(g)
 	if len(enabled) == 0 {
@@ -100,7 +90,6 @@ func addNode(g *genome, inno *innovations, rng *rand.Rand) {
 	slices.SortFunc(g.conns, func(a, b connGene) int { return a.innovation - b.innovation })
 }
 
-// enabledConns returns the indices of enabled connections.
 func enabledConns(g *genome) []int {
 	var idx []int
 	for i, c := range g.conns {

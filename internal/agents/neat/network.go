@@ -5,9 +5,6 @@ import (
 	"slices"
 )
 
-// network is the phenotype compiled from a genome: nodes evaluated in
-// topological order with tanh activations. NEAT genomes are kept acyclic, so a
-// single forward pass suffices.
 type network struct {
 	inputs, outputs int
 	biasID          int
@@ -16,7 +13,6 @@ type network struct {
 	kind            map[int]int
 }
 
-// build compiles a genome into an evaluable network.
 func build(g *genome) *network {
 	kind := make(map[int]int, len(g.nodes))
 	for _, n := range g.nodes {
@@ -71,8 +67,6 @@ func build(g *genome) *network {
 	}
 }
 
-// forward evaluates the network for an observation and returns the raw output
-// values.
 func (n *network) forward(obs []float64) []float64 {
 	val := make(map[int]float64, len(n.order))
 	for i := range n.inputs {
@@ -97,8 +91,6 @@ func (n *network) forward(obs []float64) []float64 {
 	return out
 }
 
-// reaches reports whether dst is reachable from src by following enabled
-// connections, used to keep the network acyclic when adding connections.
 func reaches(g *genome, src, dst int) bool {
 	if src == dst {
 		return true

@@ -13,13 +13,10 @@ var (
 	colEdge  = color.RGBA{90, 95, 110, 255}
 )
 
-// Bounds returns the world bounds for camera fitting.
 func (e *Env) Bounds() (minX, minY, maxX, maxY float64) {
 	return 0, 0, worldW, worldH
 }
 
-// Render draws the course: the ceiling and ground edges, each pipe's upper and
-// lower bars, and the bird (red on a crash, yellow while alive).
 func (e *Env) Render(r core.Renderer) {
 	r.Line(0, 0, worldW, 0, colEdge)
 	r.Line(0, worldH, worldW, worldH, colEdge)
@@ -36,7 +33,6 @@ func (e *Env) Render(r core.Renderer) {
 	r.Circle(birdX, e.birdY, birdR, c)
 }
 
-// bar draws one filled pipe segment spanning the vertical range [y0, y1].
 func bar(r core.Renderer, x, y0, y1 float64) {
 	if y1 <= y0 {
 		return

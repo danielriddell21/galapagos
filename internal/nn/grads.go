@@ -1,12 +1,10 @@
 package nn
 
-// Grads holds gradients with the same shape as an MLP's weights and biases.
 type Grads struct {
 	dW [][]float64
 	dB [][]float64
 }
 
-// newGrads allocates zeroed gradients matching m.
 func (m *MLP) newGrads() *Grads {
 	g := &Grads{dW: make([][]float64, len(m.layers)), dB: make([][]float64, len(m.layers))}
 	for l, ly := range m.layers {
@@ -16,8 +14,6 @@ func (m *MLP) newGrads() *Grads {
 	return g
 }
 
-// backwardInto accumulates the gradients of a single example into g, given the
-// cached forward pass and the loss gradient w.r.t. the output activations.
 func (m *MLP) backwardInto(g *Grads, acts, zs [][]float64, dOut []float64) {
 	delta := dOut
 	for l := len(m.layers) - 1; l >= 0; l-- {
@@ -53,7 +49,6 @@ func (m *MLP) backwardInto(g *Grads, acts, zs [][]float64, dOut []float64) {
 	}
 }
 
-// scale divides all gradients by n (to average over a minibatch).
 func (g *Grads) scale(n float64) {
 	for l := range g.dW {
 		for i := range g.dW[l] {

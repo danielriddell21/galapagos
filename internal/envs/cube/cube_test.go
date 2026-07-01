@@ -10,7 +10,6 @@ import (
 
 func newRNG() *rand.Rand { return rand.New(rand.NewPCG(1, 2)) }
 
-// move is a one-element action vector selecting a move index.
 type move float64
 
 func (m move) Vector() []float64 { return []float64{float64(m)} }

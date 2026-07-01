@@ -3,32 +3,27 @@ package chess
 import (
 	"image/color"
 
-	"github.com/danielriddell21/galapagos/internal/core"
 	gambit "github.com/danielriddell21/gambit/pkg/chess"
+
+	"github.com/danielriddell21/galapagos/internal/core"
 )
 
-// cell is the world size of one board square.
 const cell = 60.0
 
 var (
 	colLight = color.RGBA{235, 215, 180, 255}
 	colDark  = color.RGBA{150, 110, 75, 255}
 	colMove  = color.RGBA{240, 220, 90, 255}
-	colWhite = color.RGBA{70, 110, 180, 255} // White's discs (kept dark enough for the light glyph)
-	colBlack = color.RGBA{30, 30, 36, 255}   // Black's discs
+	colWhite = color.RGBA{70, 110, 180, 255}
+	colBlack = color.RGBA{30, 30, 36, 255}
 )
 
-// pieceLetter maps a gambit.PieceType (1..6) to its uppercase letter.
 var pieceLetter = [...]byte{0: ' ', gambit.Pawn: 'P', gambit.Knight: 'N', gambit.Bishop: 'B', gambit.Rook: 'R', gambit.Queen: 'Q', gambit.King: 'K'}
 
-// Bounds returns the world bounds of the 8x8 board for camera fitting.
 func (e *Env) Bounds() (minX, minY, maxX, maxY float64) {
 	return 0, 0, 8 * cell, 8 * cell
 }
 
-// Render draws the board (rank 1 at the bottom, White's view), the last move's
-// squares highlighted, and every piece as a disc tinted by colour with its
-// letter on top.
 func (e *Env) Render(r core.Renderer) {
 	for file := range 8 {
 		for rank := range 8 {
@@ -63,19 +58,14 @@ func (e *Env) Render(r core.Renderer) {
 	})
 }
 
-// squareXY returns the top-left world corner of the square at (file, rank), with
-// rank 1 drawn at the bottom of the board.
 func squareXY(file, rank int) (float64, float64) {
 	return float64(file) * cell, float64(7-rank) * cell
 }
 
-// sameSquare reports whether square s is at board (file, rank).
 func sameSquare(s gambit.Square, file, rank int) bool {
 	return s.File() == file && s.Rank() == rank
 }
 
-// letterFor returns a piece's uppercase type letter (P, N, B, R, Q, K); the disc
-// colour already conveys the side.
 func letterFor(p gambit.Piece) string {
 	return string(rune(pieceLetter[p.Type()]))
 }

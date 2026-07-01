@@ -9,10 +9,6 @@ import (
 	"github.com/danielriddell21/galapagos/internal/sim"
 )
 
-// TestGAEvolvesAgainstRandom evolves a GA population on chess against the random
-// opponent and checks it learns to win material/games: the best fitness reached
-// over training clears a positive bar that random initial play does not. It also
-// exercises the parallel evaluator (and gambit move generation) under -race.
 func TestGAEvolvesAgainstRandom(t *testing.T) {
 	pop := ga.New(ga.Config{
 		Population: 24, EliteFraction: 0.1, MutationRate: 0.05, MutationStd: 0.2,

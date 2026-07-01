@@ -6,8 +6,6 @@ import (
 	"time"
 )
 
-// TestPaceTiming verifies the real-time render pacing is deterministic under a
-// fake clock: five steps spaced by 10ms take exactly four intervals.
 func TestPaceTiming(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		start := time.Now()

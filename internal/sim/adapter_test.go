@@ -7,8 +7,6 @@ import (
 	"github.com/danielriddell21/galapagos/internal/core"
 )
 
-// statusEnv is a single-agent env that also reports a HUD status string, like
-// flappy's pipes-cleared count.
 type statusEnv struct {
 	*fakeSingleEnv
 	status string

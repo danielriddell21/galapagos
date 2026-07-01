@@ -1,6 +1,6 @@
 //go:build ebiten
 
-package main
+package gui
 
 import (
 	"fmt"
@@ -17,7 +17,8 @@ import (
 	ebrender "github.com/danielriddell21/galapagos/internal/render/ebiten"
 )
 
-// randomSeed returns a fresh non-negative seed for the GUI's regenerate control.
+func Available() bool { return true }
+
 func randomSeed() int64 { return int64(rand.Uint64() >> 1) }
 
 const (
@@ -25,10 +26,8 @@ const (
 	screenH = 768
 )
 
-// game is the generic Ebiten game: it drives any guiRun, so the same window
-// serves every environment and agent.
 type game struct {
-	run   guiRun
+	run   Config
 	log   *slog.Logger
 	ren   *ebrender.Renderer
 	start time.Time
@@ -38,14 +37,12 @@ type game struct {
 	showRays bool
 	speed    int
 
-	rec   *recorder // non-nil when recording a GIF
-	pix   []byte    // reusable RGBA readback buffer
+	rec   *recorder
+	pix   []byte
 	saved bool
 }
 
-// launchGUI opens a window driving the given run. When --record is set it records
-// a GIF and exits instead of running interactively.
-func launchGUI(run guiRun, log *slog.Logger) error {
+func Run(run Config, log *slog.Logger) error {
 	g := &game{
 		run:   run,
 		log:   log,
@@ -53,27 +50,25 @@ func launchGUI(run guiRun, log *slog.Logger) error {
 		start: time.Now(),
 		speed: 1,
 	}
-	if recordPath != "" {
-		g.rec = newRecorder(recordFrames, recordFPS, recordScale)
+	if run.RecordPath != "" {
+		g.rec = newRecorder(run.RecordFrames, run.RecordFPS, run.RecordScale)
 		g.speed = 2 // a steady pace for a lively recording
 	}
 	eb.SetWindowSize(screenW, screenH)
-	eb.SetWindowTitle(run.title)
+	eb.SetWindowTitle(run.Title)
 	if err := eb.RunGame(g); err != nil {
 		return fmt.Errorf("run window: %w", err)
 	}
 	return nil
 }
 
-// Update handles input and advances the simulation. When recording finishes it
-// writes the GIF and terminates the game loop.
 func (g *game) Update() error {
 	if g.rec != nil && g.rec.done {
 		if !g.saved {
-			if err := g.rec.save(recordPath); err != nil {
+			if err := g.rec.save(g.run.RecordPath); err != nil {
 				g.log.Error("record failed", "err", err)
 			} else {
-				g.log.Info("recorded", "path", recordPath, "frames", len(g.rec.frames))
+				g.log.Info("recorded", "path", g.run.RecordPath, "frames", len(g.rec.frames))
 			}
 			g.saved = true
 		}
@@ -84,17 +79,16 @@ func (g *game) Update() error {
 		return nil
 	}
 	for range g.speed {
-		if g.run.step() {
-			if g.run.complete != nil {
-				g.run.complete()
+		if g.run.Step() {
+			if g.run.Complete != nil {
+				g.run.Complete()
 			}
-			g.run.next()
+			g.run.Next()
 		}
 	}
 	return nil
 }
 
-// handleInput maps the documented controls to actions.
 func (g *game) handleInput() {
 	switch {
 	case ebinput.IsKeyJustPressed(eb.KeySpace):
@@ -110,18 +104,18 @@ func (g *game) handleInput() {
 	case ebinput.IsKeyJustPressed(eb.KeyR):
 		seed := randomSeed()
 		g.log.Info("regenerate", "seed", seed)
-		g.run.regenerate(seed)
+		g.run.Regenerate(seed)
 	case ebinput.IsKeyJustPressed(eb.KeyS):
-		if g.run.save != nil {
-			if err := g.run.save(); err != nil {
+		if g.run.Save != nil {
+			if err := g.run.Save(); err != nil {
 				g.log.Error("save failed", "err", err)
 			} else {
 				g.log.Info("saved")
 			}
 		}
 	case ebinput.IsKeyJustPressed(eb.KeyL):
-		if g.run.load != nil {
-			if err := g.run.load(); err != nil {
+		if g.run.Load != nil {
+			if err := g.run.Load(); err != nil {
 				g.log.Error("load failed", "err", err)
 			} else {
 				g.log.Info("loaded")
@@ -130,15 +124,14 @@ func (g *game) handleInput() {
 	}
 }
 
-// Draw renders the world, HUD, sparkline, and keymap overlay.
 func (g *game) Draw(screen *eb.Image) {
 	screen.Fill(color.RGBA{18, 20, 26, 255})
 	g.ren.Begin(screen)
 
 	g.updateCamera()
-	g.run.render(g.ren)
+	g.run.Render(g.ren)
 	if g.showRays {
-		if origin, ends, ok := g.run.sensors(); ok {
+		if origin, ends, ok := g.run.Sensors(); ok {
 			for _, e := range ends {
 				g.ren.Line(origin.X, origin.Y, e.X, e.Y, color.RGBA{0, 200, 120, 160})
 			}
@@ -146,7 +139,7 @@ func (g *game) Draw(screen *eb.Image) {
 	}
 	g.drawHUD()
 	g.drawKeymap()
-	g.drawSparkline(g.run.series())
+	g.drawSparkline(g.run.Series())
 
 	if g.rec != nil && !g.rec.done {
 		if g.pix == nil {
@@ -157,26 +150,23 @@ func (g *game) Draw(screen *eb.Image) {
 	}
 }
 
-// updateCamera follows the leader when enabled and available, otherwise frames
-// the whole world.
 func (g *game) updateCamera() {
 	cam := g.ren.Camera()
 	if g.follow {
-		if x, y, ok := g.run.leader(); ok {
+		if x, y, ok := g.run.Leader(); ok {
 			cam.Zoom = 1.2
 			cam.Follow(x, y)
 			return
 		}
 	}
-	if minX, minY, maxX, maxY, ok := g.run.bounds(); ok {
+	if minX, minY, maxX, maxY, ok := g.run.Bounds(); ok {
 		cam.FitBounds(minX, minY, maxX, maxY, 0.15)
 	}
 }
 
-// drawHUD draws the run's HUD lines plus speed and elapsed time, top-left.
 func (g *game) drawHUD() {
 	y := 10
-	for _, line := range g.run.hud() {
+	for _, line := range g.run.HUD() {
 		g.ren.Text(10, float64(y), line)
 		y += 16
 	}
@@ -184,16 +174,14 @@ func (g *game) drawHUD() {
 	g.ren.Text(10, float64(y+16), fmt.Sprintf("elapsed %s", time.Since(g.start).Round(time.Second)))
 }
 
-// drawKeymap lists the controls in the top-right corner.
 func (g *game) drawKeymap() {
 	y := 10
-	for _, line := range g.run.keymap {
+	for _, line := range g.run.Keymap {
 		g.ren.Text(screenW-150, float64(y), line)
 		y += 16
 	}
 }
 
-// drawSparkline plots the fitness/return history in screen space, bottom-left.
 func (g *game) drawSparkline(series []float64) {
 	if len(series) < 2 {
 		return
@@ -227,7 +215,6 @@ func pausedLabel(p bool) string {
 	return ""
 }
 
-// Layout implements ebiten.Game.
 func (g *game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return screenW, screenH
 }

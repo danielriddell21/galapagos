@@ -1,11 +1,30 @@
-# Build artifacts
+# Build output
+/bin/
+/dist/
+
+# Go build & test artifacts
+*.exe
+*.test
+*.out
+*.prof
+coverage.txt
+coverage.html
+
+# Editor / OS
+.DS_Store
+.idea/
+*.swp
+*~
+
+# Env / local
+.env
+.env.local
+.claude/
+
+# Project-specific
 /galapagos
 *.wasm
 internal/webui/web/wasm_exec.js
-
-# Saved genomes produced by training/replay
 best.json
 *.genome.json
-
-# Spec is tracked outside the repo
 SPEC.md

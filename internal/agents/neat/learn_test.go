@@ -31,9 +31,6 @@ func members(p *neat.Population) []core.Individual {
 	return out
 }
 
-// TestNEATImprovesAndIsReproducible evolves topologies on the racing task and
-// requires the best fitness to improve, and two identically-seeded runs to
-// produce identical best fitness.
 func TestNEATImprovesAndIsReproducible(t *testing.T) {
 	run := func() (before, after float64) {
 		pop := neat.New(neatConfig())

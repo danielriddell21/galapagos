@@ -8,14 +8,11 @@ import (
 	"github.com/danielriddell21/galapagos/internal/core"
 )
 
-// PCG stream constants keep initialization and reproduction independent and
-// reproducible from the seed.
 const (
 	streamInit   uint64 = 0x1a2b3c4d5e6f7081
 	streamEvolve uint64 = 0x0918273645546372
 )
 
-// Config parameters NEAT. Inputs and Outputs come from the environment specs.
 type Config struct {
 	Population         int
 	Inputs, Outputs    int
@@ -24,13 +21,12 @@ type Config struct {
 	AddConnRate        float64
 	AddNodeRate        float64
 	CompatThreshold    float64
-	C1, C2, C3         float64 // distance coefficients: excess, disjoint, weights
+	C1, C2, C3         float64
 	ElitePerSpecies    int
-	SurvivalThreshold  float64 // fraction of each species eligible to reproduce
+	SurvivalThreshold  float64
 	Seed               int64
 }
 
-// DefaultConfig returns balanced NEAT parameters.
 func DefaultConfig() Config {
 	return Config{
 		Population:         100,
@@ -48,8 +44,6 @@ func DefaultConfig() Config {
 	}
 }
 
-// Population is a NEAT agent: a set of topology-evolving genomes. It implements
-// core.PopulationAgent.
 type Population struct {
 	cfg     Config
 	members []*genome
@@ -57,7 +51,6 @@ type Population struct {
 	gen     int
 }
 
-// New creates an initial population of minimal genomes.
 func New(cfg Config) *Population {
 	if cfg.ElitePerSpecies < 1 {
 		cfg.ElitePerSpecies = 1
@@ -73,7 +66,6 @@ func New(cfg Config) *Population {
 	return p
 }
 
-// All yields the members in index order.
 func (p *Population) All() iter.Seq[core.Individual] {
 	return func(yield func(core.Individual) bool) {
 		for _, m := range p.members {
@@ -84,31 +76,21 @@ func (p *Population) All() iter.Seq[core.Individual] {
 	}
 }
 
-// Len returns the population size.
 func (p *Population) Len() int { return len(p.members) }
 
-// Generation returns the current generation number.
 func (p *Population) Generation() int { return p.gen }
 
-// Act delegates to the fittest member so the population can act as a plain agent.
 func (p *Population) Act(s core.State) core.Action { return p.best().Act(s) }
 
-// Observe is unused: NEAT learns from episode fitness.
 func (p *Population) Observe(s core.State, a core.Action, r core.Reward, next core.State, done bool) {
 }
 
-// EndEpisode is unused: fitness is recorded per member by the simulation.
 func (p *Population) EndEpisode(total core.Reward) {}
 
-// BestPolicy compiles the fittest genome over a clone into a standalone forward
-// function, fixed against later evolution and safe to call concurrently. It
-// backs hall-of-fame co-evolution, where a frozen champion is the opponent for
-// the next generation.
 func (p *Population) BestPolicy() func(obs []float64) []float64 {
 	return build(p.best().clone()).forward
 }
 
-// best returns the fittest member.
 func (p *Population) best() *genome {
 	return slices.MaxFunc(p.members, func(a, b *genome) int {
 		switch {
@@ -122,9 +104,6 @@ func (p *Population) best() *genome {
 	})
 }
 
-// Evolve produces the next generation through speciation, fitness sharing, and
-// reproduction. All randomness derives from the seed and generation, so
-// evolution is reproducible regardless of how fitness was evaluated.
 func (p *Population) Evolve() {
 	rng := rand.New(rand.NewPCG(uint64(p.cfg.Seed)^streamEvolve, uint64(p.gen)))
 	p.inno.reset()
@@ -161,7 +140,6 @@ func (p *Population) Evolve() {
 	p.gen++
 }
 
-// breed produces one mutated child from a parent pool.
 func (p *Population) breed(pool []*genome, rng *rand.Rand) *genome {
 	a := pool[rng.IntN(len(pool))]
 	b := pool[rng.IntN(len(pool))]
@@ -179,8 +157,6 @@ func (p *Population) breed(pool []*genome, rng *rand.Rand) *genome {
 	return child
 }
 
-// speciate groups members by compatibility distance using the first member of
-// each group as its representative.
 func (p *Population) speciate() [][]*genome {
 	var species [][]*genome
 	for _, m := range p.members {
@@ -200,9 +176,6 @@ func (p *Population) speciate() [][]*genome {
 	return species
 }
 
-// allocate distributes the next generation's slots across species in proportion
-// to their shared fitness, using largest-remainder rounding to hit the exact
-// population size.
 func (p *Population) allocate(species [][]*genome) []int {
 	minFit := p.members[0].fitness
 	for _, m := range p.members {
@@ -263,13 +236,11 @@ func byFitnessDesc(a, b *genome) int {
 	}
 }
 
-// survivors returns the top fraction of a fitness-sorted species (at least one).
 func survivors(sorted []*genome, fraction float64) []*genome {
 	n := max(1, int(float64(len(sorted))*fraction))
 	return sorted[:n]
 }
 
-// cumulative returns the sum of counts before index i.
 func cumulative(counts []int, i int) int {
 	s := 0
 	for j := range i {

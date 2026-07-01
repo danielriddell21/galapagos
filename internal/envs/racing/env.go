@@ -8,20 +8,17 @@ import (
 	"github.com/danielriddell21/galapagos/internal/core"
 )
 
-// Config bundles every parameter of the racing environment. A run is fully
-// reproducible from this config plus the RNG passed to ResetAll.
 type Config struct {
 	Track   TrackParams
 	Car     CarParams
 	Sensors SensorParams
 
-	CheckpointReward float64 // reward per checkpoint gate crossed
-	SpeedBonus       float64 // reward per step scaled by normalized speed
-	TimeBonus        float64 // reward per step survived
-	WallPenalty      float64 // reward applied once when a car hits a wall
+	CheckpointReward float64
+	SpeedBonus       float64
+	TimeBonus        float64
+	WallPenalty      float64
 }
 
-// DefaultConfig returns a balanced racing configuration.
 func DefaultConfig() Config {
 	return Config{
 		Track:            DefaultTrackParams(),
@@ -34,24 +31,16 @@ func DefaultConfig() Config {
 	}
 }
 
-// State is a car's observation: normalized ray distances followed by normalized
-// speed, matching ObservationSpec.
 type State struct{ obs []float64 }
 
-// Observation implements core.State.
 func (s State) Observation() []float64 { return s.obs }
 
-// Action is a continuous control: {steering ∈ [-1,1], throttle ∈ [0,1]}.
 type Action struct{ steering, throttle float64 }
 
-// NewAction builds an action from raw control values.
 func NewAction(steering, throttle float64) Action { return Action{steering, throttle} }
 
-// Vector implements core.Action.
 func (a Action) Vector() []float64 { return []float64{a.steering, a.throttle} }
 
-// Env is the racing world. It owns one shared track and N car bodies, advancing
-// them independently so a whole population can be evaluated at once.
 type Env struct {
 	cfg   Config
 	track *Track
@@ -59,15 +48,13 @@ type Env struct {
 
 	bodies []*car
 	alive  []bool
-	nextCP []int // index of the next checkpoint gate each car must cross
-	passed []int // total checkpoints crossed, the primary progress measure
-	best   int   // index of the car to highlight when rendering
+	nextCP []int
+	passed []int
+	best   int
 }
 
-// New returns an empty racing environment; call ResetAll before stepping.
 func New(cfg Config) *Env { return &Env{cfg: cfg, best: -1} }
 
-// ResetAll generates the track from rng and places n cars at the start line.
 func (e *Env) ResetAll(n int, rng *rand.Rand) []core.State {
 	e.track = GenerateTrack(rng, e.cfg.Track)
 	e.walls = e.track.walls()
@@ -86,7 +73,6 @@ func (e *Env) ResetAll(n int, rng *rand.Rand) []core.State {
 	return states
 }
 
-// StepAll advances every alive car by one timestep.
 func (e *Env) StepAll(actions []core.Action) (states []core.State, rewards []core.Reward, dones []bool) {
 	n := len(e.bodies)
 	states = make([]core.State, n)
@@ -119,8 +105,6 @@ func (e *Env) StepAll(actions []core.Action) (states []core.State, rewards []cor
 	return states, rewards, dones
 }
 
-// crossedNextCheckpoint reports whether car i swept across the gate it was due
-// to cross next, and if so advances its progress counter.
 func (e *Env) crossedNextCheckpoint(i int, prev, pos vec) bool {
 	cps := e.track.Checkpoints
 	if len(cps) == 0 {
@@ -135,7 +119,6 @@ func (e *Env) crossedNextCheckpoint(i int, prev, pos vec) bool {
 	return false
 }
 
-// hitsWall reports whether the swept segment prev→pos crosses any wall.
 func (e *Env) hitsWall(prev, pos vec) bool {
 	for _, w := range e.walls {
 		if segmentsIntersect(prev, pos, w[0], w[1]) {
@@ -145,7 +128,6 @@ func (e *Env) hitsWall(prev, pos vec) bool {
 	return false
 }
 
-// observe builds the observation vector for a car.
 func (e *Env) observe(c *car) State {
 	rays := sense(c, e.walls, e.cfg.Sensors)
 	obs := make([]float64, 0, len(rays)+1)
@@ -154,7 +136,6 @@ func (e *Env) observe(c *car) State {
 	return State{obs: obs}
 }
 
-// Alive implements core.MultiEnvironment.
 func (e *Env) Alive() int {
 	n := 0
 	for _, a := range e.alive {
@@ -165,12 +146,10 @@ func (e *Env) Alive() int {
 	return n
 }
 
-// ActionSpec implements core.MultiEnvironment.
 func (e *Env) ActionSpec() core.Spec {
 	return core.Spec{Dim: 2, Low: []float64{-1, 0}, High: []float64{1, 1}}
 }
 
-// ObservationSpec implements core.MultiEnvironment.
 func (e *Env) ObservationSpec() core.Spec {
 	dim := e.cfg.Sensors.Count + 1
 	low := make([]float64, dim)
@@ -181,17 +160,12 @@ func (e *Env) ObservationSpec() core.Spec {
 	return core.Spec{Dim: dim, Low: low, High: high}
 }
 
-// Passed returns the number of checkpoints car i has crossed, its primary
-// progress measure.
 func (e *Env) Passed(i int) int { return e.passed[i] }
 
-// SetBest marks car i as the leader so Render highlights it.
 func (e *Env) SetBest(i int) { e.best = i }
 
-// Track exposes the generated track for camera fitting and inspection.
 func (e *Env) Track() *Track { return e.track }
 
-// Bounds returns the axis-aligned world bounds of the track for camera fitting.
 func (e *Env) Bounds() (minX, minY, maxX, maxY float64) {
 	if e.track == nil {
 		return 0, 0, 0, 0
@@ -199,14 +173,11 @@ func (e *Env) Bounds() (minX, minY, maxX, maxY float64) {
 	return e.track.Bounds()
 }
 
-// CarPosition returns the world position of car i, for camera following.
 func (e *Env) CarPosition(i int) core.Vec2 {
 	p := e.bodies[i].pos
 	return core.Vec2{X: p.X, Y: p.Y}
 }
 
-// SensorEndpoints returns the world-space endpoint of each sensor ray for car
-// i, for the debug overlay. The shared origin is the car's position.
 func (e *Env) SensorEndpoints(i int) (origin core.Vec2, ends []core.Vec2) {
 	c := e.bodies[i]
 	origin = core.Vec2{X: c.pos.X, Y: c.pos.Y}
@@ -216,9 +187,6 @@ func (e *Env) SensorEndpoints(i int) (origin core.Vec2, ends []core.Vec2) {
 	return origin, ends
 }
 
-// decode extracts steering and throttle from an action vector, squashing the
-// raw control values into their valid ranges: steering via tanh into [-1,1] and
-// throttle via a logistic-style map into [0,1].
 func decode(a core.Action) (steering, throttle float64) {
 	v := a.Vector()
 	if len(v) < 2 {
@@ -227,13 +195,10 @@ func decode(a core.Action) (steering, throttle float64) {
 	return math.Tanh(v[0]), (math.Tanh(v[1]) + 1) / 2
 }
 
-// angleOf returns the heading angle of a direction vector.
 func angleOf(d vec) float64 { return math.Atan2(d.Y, d.X) }
 
 var _ core.MultiEnvironment = (*Env)(nil)
 
-// Render draws the track, checkpoints, and cars. Dead cars are faded and the
-// leader is highlighted. It only uses core.Renderer primitives.
 func (e *Env) Render(r core.Renderer) {
 	if e.track == nil {
 		return
@@ -245,12 +210,11 @@ func (e *Env) Render(r core.Renderer) {
 		r.Line(g.A.X, g.A.Y, g.B.X, g.B.Y, color.RGBA{40, 60, 90, 255})
 	}
 	for i, b := range e.bodies {
-		c := carColor(i, e.alive[i], i == e.best)
+		c := carColor(e.alive[i], i == e.best)
 		r.Circle(b.pos.X, b.pos.Y, 6, c)
 	}
 }
 
-// drawLoop draws a closed polyline.
 func drawLoop(r core.Renderer, pts []vec, c color.Color) {
 	n := len(pts)
 	for i := range n {
@@ -259,8 +223,7 @@ func drawLoop(r core.Renderer, pts []vec, c color.Color) {
 	}
 }
 
-// carColor returns the fill color for a car given its state.
-func carColor(i int, alive, best bool) color.Color {
+func carColor(alive, best bool) color.Color {
 	switch {
 	case best:
 		return color.RGBA{255, 215, 0, 255} // gold leader

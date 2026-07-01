@@ -5,36 +5,29 @@ import (
 	"math/rand/v2"
 )
 
-// Track is a procedurally generated closed-loop circuit. All polylines are
-// ordered counter-clockwise; the centerline, inner, and outer walls share the
-// same length and index, so center[i] lies between inner[i] and outer[i].
 type Track struct {
-	Center      []vec   // smoothed centerline, one loop, no repeated endpoint
-	Inner       []vec   // inner wall, offset from the centerline
-	Outer       []vec   // outer wall, offset from the centerline
-	Checkpoints []gate  // progress gates spanning inner to outer
-	Width       float64 // total track width
-	StartPos    vec     // start/finish position on the centerline
-	StartDir    vec     // unit heading at the start, along the centerline
+	Center      []vec
+	Inner       []vec
+	Outer       []vec
+	Checkpoints []gate
+	Width       float64
+	StartPos    vec
+	StartDir    vec
 }
 
-// gate is a checkpoint: a segment from the inner to the outer wall that a car
-// crosses to register progress around the loop.
 type gate struct {
 	A, B vec
 }
 
-// TrackParams controls procedural track generation.
 type TrackParams struct {
-	Points      int     // number of angular control points around the loop
-	Radius      float64 // base circuit radius
-	Width       float64 // track width
-	Displace    float64 // radial amplitude as a fraction of the radius
-	SplineSteps int     // samples per control-point span
-	Checkpoints int     // number of progress gates
+	Points      int
+	Radius      float64
+	Width       float64
+	Displace    float64
+	SplineSteps int
+	Checkpoints int
 }
 
-// DefaultTrackParams returns reasonable generation parameters.
 func DefaultTrackParams() TrackParams {
 	return TrackParams{
 		Points:      16,
@@ -46,18 +39,8 @@ func DefaultTrackParams() TrackParams {
 	}
 }
 
-// maxTrackAttempts bounds the deterministic shrink-and-retry loop that
-// guarantees a simple (non-self-intersecting) track.
 const maxTrackAttempts = 8
 
-// GenerateTrack builds a deterministic, simple closed track from rng and params.
-// Control points sit at monotonically increasing angles with smoothed radial
-// noise, making the centerline star-shaped; it is smoothed with a Catmull-Rom
-// spline and inflated into walls. Because spline overshoot can still fold the
-// walls at high amplitude, the angular jitter and radial amplitude are scaled
-// down together and the track rebuilt until it no longer self-intersects, with a
-// perfect circle as the guaranteed-simple fallback. Cars are therefore never
-// boxed in. The same rng state and params always yield the same track.
 func GenerateTrack(rng *rand.Rand, p TrackParams) *Track {
 	n := max(p.Points, 4)
 	spacing := 2 * math.Pi / float64(n)
@@ -98,12 +81,10 @@ func GenerateTrack(rng *rand.Rand, p TrackParams) *Track {
 	return build(0) // a circle is always simple
 }
 
-// selfIntersecting reports whether the centerline or either wall crosses itself.
 func (t *Track) selfIntersecting() bool {
 	return selfIntersects(t.Center) || selfIntersects(t.Inner) || selfIntersects(t.Outer)
 }
 
-// catmullClosed samples a closed Catmull-Rom spline through the control points.
 func catmullClosed(cp []vec, steps int) []vec {
 	n := len(cp)
 	if n < 4 || steps < 1 {
@@ -122,8 +103,6 @@ func catmullClosed(cp []vec, steps int) []vec {
 	return out
 }
 
-// catmullRom evaluates the centripetal-style uniform Catmull-Rom spline at t in
-// [0,1] for the span p1→p2.
 func catmullRom(p0, p1, p2, p3 vec, t float64) vec {
 	t2 := t * t
 	t3 := t2 * t
@@ -134,7 +113,6 @@ func catmullRom(p0, p1, p2, p3 vec, t float64) vec {
 	return add(add(a, b), add(c, d))
 }
 
-// buildWalls offsets the centerline by half the width along its local normal.
 func (t *Track) buildWalls() {
 	n := len(t.Center)
 	t.Inner = make([]vec, n)
@@ -149,7 +127,6 @@ func (t *Track) buildWalls() {
 	}
 }
 
-// buildCheckpoints places count evenly spaced gates around the loop.
 func (t *Track) buildCheckpoints(count int) {
 	n := len(t.Center)
 	if count <= 0 || n == 0 {
@@ -162,7 +139,6 @@ func (t *Track) buildCheckpoints(count int) {
 	}
 }
 
-// setStart places the start/finish at the first centerline point.
 func (t *Track) setStart() {
 	if len(t.Center) < 2 {
 		return
@@ -171,8 +147,6 @@ func (t *Track) setStart() {
 	t.StartDir = normalize(sub(t.Center[1], t.Center[0]))
 }
 
-// Bounds returns the axis-aligned bounding box of the track's outer wall, for
-// fitting the camera to the whole circuit.
 func (t *Track) Bounds() (minX, minY, maxX, maxY float64) {
 	if len(t.Outer) == 0 {
 		return 0, 0, 0, 0
@@ -186,7 +160,6 @@ func (t *Track) Bounds() (minX, minY, maxX, maxY float64) {
 	return minX, minY, maxX, maxY
 }
 
-// walls returns the inner and outer wall segments for collision and raycasting.
 func (t *Track) walls() [][2]vec {
 	n := len(t.Center)
 	segs := make([][2]vec, 0, n*2)

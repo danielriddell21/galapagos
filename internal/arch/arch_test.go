@@ -1,6 +1,3 @@
-// Package arch holds tests that enforce the project's decoupling rules as code:
-// environments must not import the renderer backend or agents, agents must not
-// import environments, and nothing may import the legacy math/rand.
 package arch
 
 import (
@@ -13,8 +10,6 @@ import (
 	"testing"
 )
 
-// importsOf parses every Go file under dir (the internal tree root) and returns
-// a map from package-relative path to its import paths.
 func importsOf(t *testing.T, root string) map[string][]string {
 	t.Helper()
 	out := map[string][]string{}

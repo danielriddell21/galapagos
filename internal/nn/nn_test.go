@@ -8,8 +8,6 @@ import (
 	"testing"
 )
 
-// TestGradientCheck compares analytic gradients from backprop against central
-// finite differences on the softmax cross-entropy loss.
 func TestGradientCheck(t *testing.T) {
 	m := New(Config{Sizes: []int{4, 5, 3}, Hidden: ReLU, Output: Linear, Seed: 1})
 	rng := rand.New(rand.NewPCG(2, 3))
@@ -46,8 +44,6 @@ func TestGradientCheck(t *testing.T) {
 	}
 }
 
-// TestLearnsClassification trains a small net to separate two Gaussian blobs and
-// checks loss falls and accuracy reaches 100%.
 func TestLearnsClassification(t *testing.T) {
 	rng := rand.New(rand.NewPCG(7, 9))
 	// class 0 around (-1,-1), class 1 around (+1,+1)

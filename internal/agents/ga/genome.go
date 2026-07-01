@@ -5,7 +5,6 @@ import (
 	"slices"
 )
 
-// randomGenome returns a genome of length n with Gaussian-initialized weights.
 func randomGenome(n int, rng *rand.Rand) []float64 {
 	g := make([]float64, n)
 	for i := range n {
@@ -14,9 +13,6 @@ func randomGenome(n int, rng *rand.Rand) []float64 {
 	return g
 }
 
-// crossover blends two parent genomes. With uniform probability per gene it
-// either averages the parents (blend) or copies one parent's gene, producing a
-// child that mixes both. Parents must be the same length.
 func crossover(a, b []float64, rng *rand.Rand) []float64 {
 	child := make([]float64, len(a))
 	for i := range a {
@@ -32,8 +28,6 @@ func crossover(a, b []float64, rng *rand.Rand) []float64 {
 	return child
 }
 
-// mutate perturbs genes in place with Gaussian noise of the given standard
-// deviation, applying the perturbation to each gene with probability rate.
 func mutate(g []float64, rate, std float64, rng *rand.Rand) {
 	for i := range g {
 		if rng.Float64() < rate {
@@ -42,5 +36,4 @@ func mutate(g []float64, rate, std float64, rng *rand.Rand) {
 	}
 }
 
-// clone returns an independent copy of a genome so elites survive unmutated.
 func clone(g []float64) []float64 { return slices.Clone(g) }

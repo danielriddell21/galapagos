@@ -1,15 +1,22 @@
 package efficientcube
 
-import "github.com/danielriddell21/galapagos/internal/nn"
+import (
+	"fmt"
 
-// Save writes the trained policy network to path as JSON.
-func (p *Policy) Save(path string) error { return p.net.Save(path) }
+	"github.com/danielriddell21/galapagos/internal/nn"
+)
 
-// LoadPolicy reads a policy network from path.
+func (p *Policy) Save(path string) error {
+	if err := p.net.Save(path); err != nil {
+		return fmt.Errorf("save policy: %w", err)
+	}
+	return nil
+}
+
 func LoadPolicy(path string) (*Policy, error) {
 	m, err := nn.Load(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("load policy: %w", err)
 	}
 	return &Policy{net: m}, nil
 }

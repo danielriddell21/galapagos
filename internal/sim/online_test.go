@@ -7,9 +7,6 @@ import (
 	"github.com/danielriddell21/galapagos/internal/core"
 )
 
-// fakeSingleEnv is a single-agent environment that awards reward 1 per step and
-// finishes after life steps. Its initial observation is drawn from the reset
-// rng, so identical resets are detectable.
 type fakeSingleEnv struct {
 	life int
 	step int
@@ -30,12 +27,12 @@ func (e *fakeSingleEnv) Step(a core.Action) (core.State, core.Reward, bool) {
 func (e *fakeSingleEnv) ActionSpec() core.Spec {
 	return core.Spec{Dim: 1, Low: []float64{0}, High: []float64{1}}
 }
+
 func (e *fakeSingleEnv) ObservationSpec() core.Spec {
 	return core.Spec{Dim: 1, Low: []float64{0}, High: []float64{1}}
 }
 func (e *fakeSingleEnv) Render(r core.Renderer) {}
 
-// countAgent takes a constant action and counts the transitions it observes.
 type countAgent struct{ observed int }
 
 func (a *countAgent) Act(s core.State) core.Action { return fakeAction{1} }
@@ -45,7 +42,7 @@ func (a *countAgent) Observe(s core.State, ac core.Action, r core.Reward, n core
 func (a *countAgent) EndEpisode(total core.Reward) {}
 
 func TestLiveEpisodeMatchesRunEpisode(t *testing.T) {
-	batch := RunEpisode(&fakeSingleEnv{life: 5}, &countAgent{}, 100, taskRNG(42))
+	batch := RunEpisode(&fakeSingleEnv{life: 5}, &countAgent{}, 100, TrackRNG(42))
 
 	live := NewLiveEpisode(&fakeSingleEnv{life: 5}, &countAgent{}, 100, 42)
 	for !live.Step() {

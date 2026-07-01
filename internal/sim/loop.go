@@ -1,28 +1,15 @@
 package sim
 
 import (
+	"slices"
+
 	"github.com/danielriddell21/galapagos/internal/core"
 )
 
-// collect gathers a population's members into an index-stable slice so they can
-// be addressed positionally during a generation.
 func collect(pop core.PopulationAgent) []core.Individual {
-	members := make([]core.Individual, 0, pop.Len())
-	for ind := range pop.All() {
-		members = append(members, ind)
-	}
-	return members
+	return slices.Collect(pop.All())
 }
 
-// RunGeneration evaluates every member of pop simultaneously on the shared
-// multi-environment for at most maxSteps, accumulating each member's reward as
-// its fitness. The track is generated deterministically from seed. If onStep is
-// non-nil it is called after each step (the render/pacing hook). The returned
-// slice is indexed to match pop.All().
-//
-// Because bodies never interact (collisions are against walls only), this
-// simultaneous rollout produces the same per-member fitness as evaluating each
-// member independently; see EvaluateParallel.
 func RunGeneration(env core.MultiEnvironment, pop core.PopulationAgent, maxSteps int, seed int64, onStep func()) []float64 {
 	members := collect(pop)
 	n := len(members)

@@ -78,8 +78,6 @@ func TestMazeReachableByGreedyDFS(t *testing.T) {
 	}
 }
 
-// exploreToGoal does an iterative DFS over cells, moving the agent one step at a
-// time, and returns whether the goal was reached.
 func exploreToGoal(e *Env) bool {
 	w, h := e.cfg.Width, e.cfg.Height
 	visited := make([]bool, w*h)

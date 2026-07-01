@@ -1,4 +1,4 @@
-package main
+package gui
 
 import (
 	"fmt"
@@ -9,19 +9,14 @@ import (
 	"os"
 )
 
-// recorder accumulates downscaled, palette-quantized frames and writes them as an
-// animated GIF. It is independent of the graphics backend (it takes plain
-// image.Image frames), so it is unit-tested without a display.
 type recorder struct {
 	frames    []*image.Paletted
-	delayCs   int // per-frame delay in hundredths of a second
-	scale     int // integer downscale factor (1 = full size)
+	delayCs   int
+	scale     int
 	maxFrames int
 	done      bool
 }
 
-// newRecorder returns a recorder capturing up to maxFrames at fps, downscaled by
-// scale.
 func newRecorder(maxFrames, fps, scale int) *recorder {
 	return &recorder{
 		delayCs:   max(100/max(fps, 1), 1),
@@ -30,7 +25,6 @@ func newRecorder(maxFrames, fps, scale int) *recorder {
 	}
 }
 
-// add downscales and quantizes a frame, appending it until maxFrames is reached.
 func (r *recorder) add(img image.Image) {
 	if r.done {
 		return
@@ -44,7 +38,6 @@ func (r *recorder) add(img image.Image) {
 	}
 }
 
-// save writes the accumulated frames as an animated GIF.
 func (r *recorder) save(path string) error {
 	if len(r.frames) == 0 {
 		return fmt.Errorf("recorder: no frames captured")
@@ -67,8 +60,6 @@ func (r *recorder) save(path string) error {
 	return nil
 }
 
-// downscale shrinks img by an integer factor using nearest-neighbour sampling. A
-// factor of 1 returns an RGBA copy unchanged.
 func downscale(img image.Image, factor int) *image.RGBA {
 	b := img.Bounds()
 	w, h := b.Dx()/factor, b.Dy()/factor

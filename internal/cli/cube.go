@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	"fmt"
@@ -7,19 +7,17 @@ import (
 	"os"
 	"time"
 
+	rubix "github.com/danielriddell21/rubix/pkg/cube"
+	"github.com/spf13/cobra"
+
 	"github.com/danielriddell21/galapagos/internal/agents/efficientcube"
 	"github.com/danielriddell21/galapagos/internal/core"
 	"github.com/danielriddell21/galapagos/internal/envs/cube"
-	rubix "github.com/danielriddell21/rubix/pkg/cube"
-	"github.com/spf13/cobra"
+	"github.com/danielriddell21/galapagos/internal/gui"
 )
 
 var cubeKeymap = []string{"space pause", "+/- speed", "r new scrambles"}
 
-// coupleScramble raises the training depth and search horizon to cover a
-// scramble of the given target depth, never shrinking values the user set
-// higher. The horizon keeps a small margin above the scramble so the solver can
-// still find a slightly suboptimal solution.
 func coupleScramble(target, scrambleK, maxDepth int) (k, depth int) {
 	if scrambleK < target {
 		scrambleK = target
@@ -102,12 +100,14 @@ func init() {
 	rootCmd.AddCommand(cmd)
 }
 
-// loadOrTrainPolicy loads a saved policy when requested, otherwise trains one and
-// optionally saves it.
 func loadOrTrainPolicy(model string, train bool, cfg efficientcube.TrainConfig, log *slog.Logger) (*efficientcube.Policy, error) {
 	if model != "" && !train {
 		log.Info("loading policy", "path", model)
-		return efficientcube.LoadPolicy(model)
+		p, err := efficientcube.LoadPolicy(model)
+		if err != nil {
+			return nil, fmt.Errorf("load policy %q: %w", model, err)
+		}
+		return p, nil
 	}
 	log.Info("training", "iters", cfg.Iters, "scramble_k", cfg.K, "hidden", cfg.Hidden, "seed", cfg.Seed)
 	p := efficientcube.Train(cfg, func(it int, loss, acc float64) {
@@ -115,14 +115,13 @@ func loadOrTrainPolicy(model string, train bool, cfg efficientcube.TrainConfig, 
 	})
 	if model != "" {
 		if err := p.Save(model); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("save policy %q: %w", model, err)
 		}
 		log.Info("saved policy", "path", model)
 	}
 	return p, nil
 }
 
-// reportCubeEval beam-solves N scrambles in parallel and prints aggregate stats.
 func reportCubeEval(p *efficientcube.Policy, depth, n int, beam efficientcube.BeamConfig, seed int64) {
 	scrambles := make([]rubix.Cube, n)
 	for i := range n {
@@ -148,8 +147,6 @@ func reportCubeEval(p *efficientcube.Policy, depth, n int, beam efficientcube.Be
 		depth, solved, n, 100*float64(solved)/float64(n), avgLen, totNodes/n, elapsed.Round(time.Millisecond))
 }
 
-// cubeWall opens a window showing a grid of cubes being solved in parallel: the
-// solutions are computed concurrently with SolveBatch, then animated together.
 func cubeWall(p *efficientcube.Policy, beam efficientcube.BeamConfig, count, depth int, seed int64, log *slog.Logger) error {
 	const gap = cube.NetW * 0.15
 	cols := int(math.Ceil(math.Sqrt(float64(count))))
@@ -177,68 +174,79 @@ func cubeWall(p *efficientcube.Policy, beam efficientcube.BeamConfig, count, dep
 	}
 	generate(seed)
 
-	solvedCount := func() int {
-		k := 0
-		for i := range count {
-			if states[i].IsSolved() {
-				k++
-			}
-		}
-		return k
-	}
+	solvedCount := func() int { return countSolved(states) }
 
-	run := guiRun{
-		title:  "Galapagos — cube (efficientcube)",
-		keymap: cubeKeymap,
-		step: func() bool {
-			pending := false
-			for i := range count {
-				if !states[i].IsSolved() && idx[i] < len(plans[i]) {
-					pending = true
-				}
-			}
-			if pending {
-				// Advance the shared turn animation; apply the moves when it completes.
-				if frac += 1.0 / turnFrames; frac >= 1 {
-					frac = 0
-					for i := range count {
-						if !states[i].IsSolved() && idx[i] < len(plans[i]) {
-							states[i] = states[i].Applied(plans[i][idx[i]])
-							idx[i]++
-						}
-					}
-				}
-				return false
-			}
+	run := recordConfig()
+	run.Title = "Galapagos — cube (efficientcube)"
+	run.Keymap = cubeKeymap
+	run.Step = func() bool {
+		if !cubesPending(states, plans, idx) {
 			// All cubes finished; hold the solved cubes briefly before the next batch.
 			hold++
 			return hold >= 45
-		},
-		next: func() { generate(cur + int64(count)) },
-		render: func(r core.Renderer) {
-			for i := range count {
-				ox := float64(i%cols) * (cube.NetW + gap)
-				oy := float64(i/cols) * (cube.NetH + gap)
-				turn, f := rubix.Move(0), 0.0
-				if !states[i].IsSolved() && idx[i] < len(plans[i]) {
-					turn, f = plans[i][idx[i]], frac
-				}
-				cube.RenderCube(r, states[i], turn, f, ox, oy)
-			}
-		},
-		hud: func() []string {
-			return []string{
-				fmt.Sprintf("cubes %d  scramble %d", count, depth),
-				fmt.Sprintf("solved %d/%d", solvedCount(), count),
-			}
-		},
-		series: func() []float64 { return nil },
-		bounds: func() (float64, float64, float64, float64, bool) {
-			return 0, 0, float64(cols)*(cube.NetW+gap) - gap, float64(rows)*(cube.NetH+gap) - gap, true
-		},
-		leader:     func() (float64, float64, bool) { return 0, 0, false },
-		sensors:    func() (core.Vec2, []core.Vec2, bool) { return core.Vec2{}, nil, false },
-		regenerate: generate,
+		}
+		// Advance the shared turn animation; apply the moves when it completes.
+		if frac += 1.0 / turnFrames; frac >= 1 {
+			frac = 0
+			advanceCubes(states, plans, idx)
+		}
+		return false
 	}
-	return launchGUI(run, log)
+	run.Next = func() { generate(cur + int64(count)) }
+	run.Render = func(r core.Renderer) {
+		for i := range count {
+			ox := float64(i%cols) * (cube.NetW + gap)
+			oy := float64(i/cols) * (cube.NetH + gap)
+			turn, f := rubix.Move(0), 0.0
+			if !states[i].IsSolved() && idx[i] < len(plans[i]) {
+				turn, f = plans[i][idx[i]], frac
+			}
+			cube.RenderCube(r, states[i], turn, f, ox, oy)
+		}
+	}
+	run.HUD = func() []string {
+		return []string{
+			fmt.Sprintf("cubes %d  scramble %d", count, depth),
+			fmt.Sprintf("solved %d/%d", solvedCount(), count),
+		}
+	}
+	run.Series = func() []float64 { return nil }
+	run.Bounds = func() (float64, float64, float64, float64, bool) {
+		return 0, 0, float64(cols)*(cube.NetW+gap) - gap, float64(rows)*(cube.NetH+gap) - gap, true
+	}
+	run.Leader = func() (float64, float64, bool) { return 0, 0, false }
+	run.Sensors = func() (core.Vec2, []core.Vec2, bool) { return core.Vec2{}, nil, false }
+	run.Regenerate = generate
+	if err := gui.Run(run, log); err != nil {
+		return fmt.Errorf("run gui: %w", err)
+	}
+	return nil
+}
+
+func cubesPending(states []rubix.Cube, plans [][]rubix.Move, idx []int) bool {
+	for i := range states {
+		if !states[i].IsSolved() && idx[i] < len(plans[i]) {
+			return true
+		}
+	}
+	return false
+}
+
+func advanceCubes(states []rubix.Cube, plans [][]rubix.Move, idx []int) {
+	for i := range states {
+		if !states[i].IsSolved() && idx[i] < len(plans[i]) {
+			states[i] = states[i].Applied(plans[i][idx[i]])
+			idx[i]++
+		}
+	}
+}
+
+func countSolved(states []rubix.Cube) int {
+	k := 0
+	for i := range states {
+		if states[i].IsSolved() {
+			k++
+		}
+	}
+	return k
 }

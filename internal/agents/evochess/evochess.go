@@ -5,29 +5,26 @@ import (
 	"math/rand/v2"
 	"slices"
 
-	"github.com/danielriddell21/galapagos/internal/core"
 	gambit "github.com/danielriddell21/gambit/pkg/chess"
+
+	"github.com/danielriddell21/galapagos/internal/core"
 )
 
-// PCG stream constants keep initialization and reproduction independent and
-// reproducible from the seed.
 const (
 	streamInit   uint64 = 0x9e3779b97f4a7c15
 	streamEvolve uint64 = 0xc2b2ae3d27d4eb4f
 )
 
-// Config parameters the evolving search agent.
 type Config struct {
 	Population     int
-	Depth          int     // alpha-beta search depth in plies
-	EliteFraction  float64 // top fraction carried over unmutated
-	MutationRate   float64 // per-gene mutation probability
-	MutationStd    float64 // mutation step size
+	Depth          int
+	EliteFraction  float64
+	MutationRate   float64
+	MutationStd    float64
 	TournamentSize int
 	Seed           int64
 }
 
-// DefaultConfig returns balanced parameters for a small, watchable run.
 func DefaultConfig() Config {
 	return Config{
 		Population: 24, Depth: 2, EliteFraction: 0.1,
@@ -35,13 +32,10 @@ func DefaultConfig() Config {
 	}
 }
 
-// boarder is satisfied by the chess environment's state, exposing the position
-// so the agent can search. The agent never imports the environment.
 type boarder interface {
 	Board() *gambit.Board
 }
 
-// individual is one member: an evolved evaluator plus its measured fitness.
 type individual struct {
 	genome  []float64
 	eval    *evaluator
@@ -53,9 +47,6 @@ func newIndividual(genome []float64, depth int) *individual {
 	return &individual{genome: genome, eval: newEvaluator(genome), depth: depth}
 }
 
-// Act searches the current position and returns the chosen move encoded for the
-// chess environment. If the state is not a chess position it yields an empty
-// action (the environment then falls back to a legal move).
 func (m *individual) Act(s core.State) core.Action {
 	b, ok := s.(boarder)
 	if !ok {
@@ -68,15 +59,12 @@ func (m *individual) Fitness() core.Reward     { return m.fitness }
 func (m *individual) SetFitness(r core.Reward) { m.fitness = r }
 func (m *individual) Genome() []float64        { return m.genome }
 
-// Population is the evolving search agent. It implements core.PopulationAgent.
 type Population struct {
 	cfg     Config
 	members []*individual
 	gen     int
 }
 
-// New creates an initial population whose evaluators are seeded near classical
-// material values with small random piece-square perturbations.
 func New(cfg Config) *Population {
 	if cfg.TournamentSize <= 0 {
 		cfg.TournamentSize = 3
@@ -92,8 +80,6 @@ func New(cfg Config) *Population {
 	return p
 }
 
-// randomGenome seeds material near classical values and the piece-square tables
-// with small Gaussian noise.
 func randomGenome(rng *rand.Rand) []float64 {
 	g := make([]float64, genomeLen)
 	for t := range numTypes {
@@ -105,7 +91,6 @@ func randomGenome(rng *rand.Rand) []float64 {
 	return g
 }
 
-// All yields the members in index order.
 func (p *Population) All() iter.Seq[core.Individual] {
 	return func(yield func(core.Individual) bool) {
 		for _, m := range p.members {
@@ -116,24 +101,16 @@ func (p *Population) All() iter.Seq[core.Individual] {
 	}
 }
 
-// Len returns the population size.
 func (p *Population) Len() int { return len(p.members) }
 
-// Generation returns the current generation number.
 func (p *Population) Generation() int { return p.gen }
 
-// Act delegates to the fittest member, so the population can act as a plain agent.
 func (p *Population) Act(s core.State) core.Action { return p.best().Act(s) }
 
-// Observe is unused: the agent learns from episode fitness.
 func (p *Population) Observe(core.State, core.Action, core.Reward, core.State, bool) {}
 
-// EndEpisode is unused: fitness is recorded per member by the simulation.
 func (p *Population) EndEpisode(core.Reward) {}
 
-// FrozenPolicy returns the current best member's move policy over a cloned
-// evaluator, fixed against later evolution and safe to call concurrently. It
-// backs hall-of-fame co-evolution.
 func (p *Population) FrozenPolicy() func(core.State) core.Action {
 	eval := p.best().eval.clone()
 	depth := p.cfg.Depth
@@ -146,7 +123,6 @@ func (p *Population) FrozenPolicy() func(core.State) core.Action {
 	}
 }
 
-// best returns the fittest member.
 func (p *Population) best() *individual {
 	return slices.MaxFunc(p.members, func(a, b *individual) int {
 		switch {
@@ -160,9 +136,6 @@ func (p *Population) best() *individual {
 	})
 }
 
-// Evolve produces the next generation: elites carry over unmutated, the rest are
-// bred by tournament selection, uniform crossover, and Gaussian mutation. All
-// randomness derives from the seed and generation.
 func (p *Population) Evolve() {
 	rng := rand.New(rand.NewPCG(uint64(p.cfg.Seed)^streamEvolve, uint64(p.gen)))
 
@@ -195,7 +168,6 @@ func (p *Population) Evolve() {
 	p.gen++
 }
 
-// tournament samples size members and returns the fittest.
 func tournament(pop []*individual, size int, rng *rand.Rand) *individual {
 	best := pop[rng.IntN(len(pop))]
 	for range size - 1 {
@@ -206,7 +178,6 @@ func tournament(pop []*individual, size int, rng *rand.Rand) *individual {
 	return best
 }
 
-// crossover blends two genomes gene-by-gene with a uniform mask.
 func crossover(a, b []float64, rng *rand.Rand) []float64 {
 	child := make([]float64, len(a))
 	for i := range child {
@@ -219,7 +190,6 @@ func crossover(a, b []float64, rng *rand.Rand) []float64 {
 	return child
 }
 
-// mutate perturbs each gene with probability rate by Gaussian noise scaled by std.
 func mutate(g []float64, rate, std float64, rng *rand.Rand) {
 	for i := range g {
 		if rng.Float64() < rate {

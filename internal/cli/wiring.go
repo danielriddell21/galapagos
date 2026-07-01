@@ -1,9 +1,11 @@
-package main
+package cli
 
 import (
 	"fmt"
 	"log/slog"
 	"math/rand/v2"
+
+	"github.com/spf13/cobra"
 
 	"github.com/danielriddell21/galapagos/internal/agents/ga"
 	"github.com/danielriddell21/galapagos/internal/agents/neat"
@@ -11,19 +13,14 @@ import (
 	"github.com/danielriddell21/galapagos/internal/core"
 	"github.com/danielriddell21/galapagos/internal/envs/racing"
 	"github.com/danielriddell21/galapagos/internal/sim"
-	"github.com/spf13/cobra"
 )
 
-// keymaps shown in the GUI's top-right overlay, per kind of run.
 var (
 	racingKeymap = []string{"space pause", "f follow", "+/- speed", "r new track", "d rays", "s save", "l load"}
 	swarmKeymap  = []string{"space pause", "+/- speed", "r regenerate"}
 	onlineKeymap = []string{"space pause", "+/- speed", "r regenerate"}
 )
 
-// resolveSeed chooses the run seed: an explicit --seed wins; otherwise a
-// non-zero config seed; otherwise a fresh random seed. The chosen seed is always
-// logged so a random run can be reproduced with --seed.
 func resolveSeed(cmd *cobra.Command, configSeed int64, log *slog.Logger) int64 {
 	var seed int64
 	switch {
@@ -38,8 +35,6 @@ func resolveSeed(cmd *cobra.Command, configSeed int64, log *slog.Logger) int64 {
 	return seed
 }
 
-// discreteCount returns the number of discrete actions described by a spec, or 0
-// when the action is continuous.
 func discreteCount(s core.Spec) int {
 	if !s.Discrete || len(s.High) == 0 {
 		return 0
@@ -47,7 +42,6 @@ func discreteCount(s core.Spec) int {
 	return int(s.High[0]-s.Low[0]) + 1
 }
 
-// newPopulationAgent builds GA or NEAT sized to an environment's specs.
 func newPopulationAgent(name string, obs, act core.Spec, population int, seed int64) (core.PopulationAgent, error) {
 	switch name {
 	case "ga":
@@ -64,9 +58,6 @@ func newPopulationAgent(name string, obs, act core.Spec, population int, seed in
 	}
 }
 
-// gaConfigFrom builds the genetic-algorithm config from the run config. The
-// network input size is the ray count plus one for normalized speed; the output
-// size is two (steering and throttle).
 func gaConfigFrom(c config.Racing) ga.Config {
 	return ga.Config{
 		Population:    c.Population,
@@ -80,14 +71,12 @@ func gaConfigFrom(c config.Racing) ga.Config {
 	}
 }
 
-// racingConfigFrom builds the environment config from the run config.
 func racingConfigFrom(c config.Racing) racing.Config {
 	rc := racing.DefaultConfig()
 	rc.Sensors.Count = c.Rays
 	return rc
 }
 
-// neatConfigFrom builds a NEAT config from the run config.
 func neatConfigFrom(c config.Racing) neat.Config {
 	nc := neat.DefaultConfig()
 	nc.Population = c.Population
@@ -97,7 +86,6 @@ func neatConfigFrom(c config.Racing) neat.Config {
 	return nc
 }
 
-// buildAgent constructs the configured population-based agent.
 func buildAgent(c config.Racing) core.PopulationAgent {
 	if c.Agent == "neat" {
 		return neat.New(neatConfigFrom(c))
@@ -105,8 +93,6 @@ func buildAgent(c config.Racing) core.PopulationAgent {
 	return ga.New(gaConfigFrom(c))
 }
 
-// envFactory returns a factory that builds independent racing environments,
-// used for parallel evaluation.
 func envFactory(rc racing.Config) sim.EnvFactory {
 	return func() core.MultiEnvironment { return racing.New(rc) }
 }

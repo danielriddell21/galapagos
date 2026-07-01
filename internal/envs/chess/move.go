@@ -3,14 +3,11 @@ package chess
 import (
 	"math"
 
-	"github.com/danielriddell21/galapagos/internal/core"
 	gambit "github.com/danielriddell21/gambit/pkg/chess"
+
+	"github.com/danielriddell21/galapagos/internal/core"
 )
 
-// bestLegalMove decodes an action into a legal move. The action is 128
-// preferences (64 "from" + 64 "to") in the side-to-move's perspective; each
-// legal move scores fromPref[from] + toPref[to], and the highest-scoring move
-// wins. ok is false only when there are no legal moves (a terminal position).
 func bestLegalMove(b *gambit.Board, a core.Action) (gambit.Move, bool) {
 	moves := b.LegalMoves()
 	if len(moves) == 0 {
@@ -35,8 +32,6 @@ func bestLegalMove(b *gambit.Board, a core.Action) (gambit.Move, bool) {
 	return best, true
 }
 
-// pref reads index i from an action vector, treating out-of-range as zero so a
-// short vector degrades gracefully.
 func pref(v []float64, i int) float64 {
 	if i >= 0 && i < len(v) {
 		return v[i]

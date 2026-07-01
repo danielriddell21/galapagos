@@ -5,7 +5,6 @@ import (
 	"testing"
 )
 
-// draw collects n floats from r so streams can be compared.
 func draw(r *rand.Rand, n int) []float64 {
 	out := make([]float64, n)
 	for i := range n {

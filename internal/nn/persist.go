@@ -6,11 +6,8 @@ import (
 	"os"
 )
 
-// schemaVersion is the on-disk format version for saved networks.
 const schemaVersion = 1
 
-// Saved is the JSON representation of an MLP: its shape, activations, and flat
-// per-layer weights and biases.
 type Saved struct {
 	SchemaVersion int         `json:"schema_version"`
 	Sizes         []int       `json:"sizes"`
@@ -20,7 +17,6 @@ type Saved struct {
 	Biases        [][]float64 `json:"biases"`
 }
 
-// Snapshot returns a serializable copy of the network.
 func (m *MLP) Snapshot() Saved {
 	s := Saved{SchemaVersion: schemaVersion, Sizes: m.sizes, Hidden: m.hidden, Output: m.output}
 	for _, ly := range m.layers {
@@ -30,7 +26,6 @@ func (m *MLP) Snapshot() Saved {
 	return s
 }
 
-// FromSnapshot rebuilds a network from a saved snapshot.
 func FromSnapshot(s Saved) (*MLP, error) {
 	if s.SchemaVersion != schemaVersion {
 		return nil, fmt.Errorf("nn: schema version %d unsupported, want %d", s.SchemaVersion, schemaVersion)
@@ -49,19 +44,17 @@ func FromSnapshot(s Saved) (*MLP, error) {
 	return m, nil
 }
 
-// Save writes the network to path as JSON.
 func (m *MLP) Save(path string) error {
 	data, err := json.Marshal(m.Snapshot())
 	if err != nil {
 		return fmt.Errorf("nn: marshal: %w", err)
 	}
-	if err := os.WriteFile(path, data, 0o644); err != nil {
+	if err := os.WriteFile(path, data, 0o600); err != nil {
 		return fmt.Errorf("nn: write %q: %w", path, err)
 	}
 	return nil
 }
 
-// Load reads a network from path.
 func Load(path string) (*MLP, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {

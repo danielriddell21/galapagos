@@ -1,15 +1,16 @@
-package main
+package cli
 
 import (
 	"fmt"
 	"iter"
+
+	"github.com/spf13/cobra"
 
 	"github.com/danielriddell21/galapagos/internal/agents/ga"
 	"github.com/danielriddell21/galapagos/internal/config"
 	"github.com/danielriddell21/galapagos/internal/core"
 	"github.com/danielriddell21/galapagos/internal/envs/racing"
 	"github.com/danielriddell21/galapagos/internal/sim"
-	"github.com/spf13/cobra"
 )
 
 func init() {
@@ -24,7 +25,7 @@ func init() {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			sg, err := ga.LoadGenome(genomePath)
 			if err != nil {
-				return err
+				return fmt.Errorf("load genome: %w", err)
 			}
 			rc := racing.DefaultConfig()
 			rc.Sensors.Count = sg.Inputs - 1
@@ -40,16 +41,11 @@ func init() {
 	rootCmd.AddCommand(cmd)
 }
 
-// replayDriver rolls a single driver out on a fresh track and returns its total
-// reward. It reuses the training loop with a population of one, so replay is
-// deterministic and matches the trained result.
 func replayDriver(rc racing.Config, d core.Individual, seed int64, maxSteps int) float64 {
 	fitness := sim.RunGeneration(racing.New(rc), singleDriverPop{d}, maxSteps, seed, nil)
 	return fitness[0]
 }
 
-// singleDriverPop adapts one driver to the PopulationAgent interface so it can
-// be replayed through the standard simulation loop.
 type singleDriverPop [1]core.Individual
 
 func (p singleDriverPop) Act(s core.State) core.Action { return p[0].Act(s) }
