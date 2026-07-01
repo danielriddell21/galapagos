@@ -26,14 +26,9 @@ func RunEpisode(env core.Environment, agent core.Agent, maxSteps int, rng *rand.
 func TrainAgent(env core.Environment, agent core.Agent, episodes, maxSteps int, seed int64) []core.Reward {
 	rewards := make([]core.Reward, episodes)
 	for i := range episodes {
-		resetRNG := rand.New(rand.NewPCG(uint64(seed), streamTrack))
-		rewards[i] = RunEpisode(env, agent, maxSteps, resetRNG)
+		rewards[i] = RunEpisode(env, agent, maxSteps, TrackRNG(seed))
 	}
 	return rewards
-}
-
-func taskRNG(seed int64) *rand.Rand {
-	return rand.New(rand.NewPCG(uint64(seed), streamTrack))
 }
 
 type LiveEpisode struct {
@@ -56,7 +51,7 @@ func NewLiveEpisode(env core.Environment, agent core.Agent, maxSteps int, seed i
 }
 
 func (l *LiveEpisode) reset() {
-	l.state = l.env.Reset(taskRNG(l.seed))
+	l.state = l.env.Reset(TrackRNG(l.seed))
 	l.step = 0
 	l.ret = 0
 	l.done = false

@@ -42,7 +42,7 @@ func (a *countAgent) Observe(s core.State, ac core.Action, r core.Reward, n core
 func (a *countAgent) EndEpisode(total core.Reward) {}
 
 func TestLiveEpisodeMatchesRunEpisode(t *testing.T) {
-	batch := RunEpisode(&fakeSingleEnv{life: 5}, &countAgent{}, 100, taskRNG(42))
+	batch := RunEpisode(&fakeSingleEnv{life: 5}, &countAgent{}, 100, TrackRNG(42))
 
 	live := NewLiveEpisode(&fakeSingleEnv{life: 5}, &countAgent{}, 100, 42)
 	for !live.Step() {

@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"log/slog"
+	"slices"
 
 	"github.com/danielriddell21/galapagos/internal/agents/qlearning"
 	"github.com/danielriddell21/galapagos/internal/core"
@@ -63,7 +64,7 @@ func runEnv(p envParams, log *slog.Logger) error {
 		log.Info("training", "agent", p.agent, "generations", p.generations, "population", p.population, "seed", p.seed)
 		sim.TrainHeadless(factory, pop, sim.RunConfig{Seed: p.seed, MaxSteps: p.maxSteps, Generations: p.generations}, tel)
 		best := sim.EvaluateParallel(factory, individuals(pop), p.maxSteps, p.seed)
-		fmt.Printf("best fitness %.3f\n", maxOf(best))
+		fmt.Printf("best fitness %.3f\n", slices.Max(best))
 		return nil
 	}
 	env := sim.AsMulti(p.newSingle)
@@ -75,17 +76,5 @@ func runEnv(p envParams, log *slog.Logger) error {
 }
 
 func individuals(pop core.PopulationAgent) []core.Individual {
-	var out []core.Individual
-	for m := range pop.All() {
-		out = append(out, m)
-	}
-	return out
-}
-
-func maxOf(xs []float64) float64 {
-	m := xs[0]
-	for _, x := range xs {
-		m = max(m, x)
-	}
-	return m
+	return slices.Collect(pop.All())
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"slices"
 
 	"github.com/spf13/cobra"
 
@@ -135,7 +136,7 @@ func evolveChess(agent string, coevolve bool, generations, population, maxPlies,
 	}
 	// Evaluate the final (just-evolved) generation so its best is meaningful.
 	fitness = evaluate()
-	return pop, maxOf(fitness), nil
+	return pop, slices.Max(fitness), nil
 }
 
 func watchChess(pop core.PopulationAgent, maxPlies int, seed int64, agent string, log *slog.Logger) error {
