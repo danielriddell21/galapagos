@@ -1,12 +1,8 @@
 github.com/cpuguy83/go-md2man/v2 v2.0.6/go.mod h1:oOW0eioCTA6cOiMLiUPZOpcVxMig6NIQQ7OS05n1F4g=
 github.com/danielriddell21/gambit v0.0.0-20260608223531-e066e9b32899 h1:ovGeaC45kzkqhVOlBraY76SEMfxKriuqWtGseSKy2ss=
 github.com/danielriddell21/gambit v0.0.0-20260608223531-e066e9b32899/go.mod h1:SuZKzXqyhVICGNd4WVroG3Ta1pVGYK40rxF4qrfeNjc=
-github.com/danielriddell21/rubix v0.0.0-20260606223000-b5624a236b98 h1:nHvOkAjuVHz9cIj2qzuc1ehatrr/90hRl8a6w1Z7Il8=
-github.com/danielriddell21/rubix v0.0.0-20260606223000-b5624a236b98/go.mod h1:1G61gIrtUH0i6SzvoHRTpoRCFNl9ho+8VajXsT0W/jE=
-github.com/danielriddell21/rubix v0.0.0-20260614083345-58152422784a h1:LrXI0eMENGkzd+qdhu6OGLGfs+TcsEGaCq2WgyzBu9A=
-github.com/danielriddell21/rubix v0.0.0-20260614083345-58152422784a/go.mod h1:1G61gIrtUH0i6SzvoHRTpoRCFNl9ho+8VajXsT0W/jE=
-github.com/danielriddell21/rubix v0.0.0-20260614092341-1d6b2d8ae34c h1:8qdATJp96CvxTK5JI3EiVNRgvtw/24MAjCzO8qSpsfE=
-github.com/danielriddell21/rubix v0.0.0-20260614092341-1d6b2d8ae34c/go.mod h1:1G61gIrtUH0i6SzvoHRTpoRCFNl9ho+8VajXsT0W/jE=
+github.com/danielriddell21/rubix v0.1.1 h1:7L7okiOvQ3DBf2DLgqhY95MP1QPPyQUYMNnGEe6YRPQ=
+github.com/danielriddell21/rubix v0.1.1/go.mod h1:0kcEne0S2zN62A4OYE6pJBt3lQPG1pmXX9OJS9+GaVo=
 github.com/ebitengine/gomobile v0.0.0-20250923094054-ea854a63cce1 h1:+kz5iTT3L7uU+VhlMfTb8hHcxLO3TlaELlX8wa4XjA0=
 github.com/ebitengine/gomobile v0.0.0-20250923094054-ea854a63cce1/go.mod h1:lKJoeixeJwnFmYsBny4vvCJGVFc3aYDalhuDsfZzWHI=
 github.com/ebitengine/hideconsole v1.0.0 h1:5J4U0kXF+pv/DhiXt5/lTz0eO5ogJ1iXb8Yj1yReDqE=
@@ -22,8 +18,9 @@ github.com/jezek/xgb v1.1.1/go.mod h1:nrhwO0FX/enq75I7Y7G8iN1ubpSGZEiA3v9e9GyRFl
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/spf13/cobra v1.10.2 h1:DMTTonx5m65Ic0GOoRY2c16WCbHxOOw6xxezuLaBpcU=
 github.com/spf13/cobra v1.10.2/go.mod h1:7C1pvHqHw5A4vrJfjNwvOdzYu0Gml16OCs2GRiTUUS4=
-github.com/spf13/pflag v1.0.9 h1:9exaQaMOCwffKiiiYk6/BndUBv+iRViNW+4lEMi0PvY=
 github.com/spf13/pflag v1.0.9/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
+github.com/spf13/pflag v1.0.10 h1:4EBh2KAYBwaONj6b2Ye1GiHfwjqyROoF4RwYO+vPwFk=
+github.com/spf13/pflag v1.0.10/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
 go.yaml.in/yaml/v3 v3.0.4/go.mod h1:DhzuOOF2ATzADvBadXxruRBLzYTpT36CKvDb3+aBEFg=
 golang.org/x/image v0.31.0 h1:mLChjE2MV6g1S7oqbXC0/UcKijjm5fnJLUYKIYrLESA=
 golang.org/x/image v0.31.0/go.mod h1:R9ec5Lcp96v9FTF+ajwaH3uGxPH4fKfHHAVbUILxghA=
