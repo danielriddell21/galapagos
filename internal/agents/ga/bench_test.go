@@ -3,12 +3,14 @@ package ga
 import (
 	"math/rand/v2"
 	"testing"
+
+	gacore "github.com/danielriddell21/galapagos/pkg/ga"
 )
 
 func BenchmarkForward(b *testing.B) {
 	cfg := testConfig()
 	rng := rand.New(rand.NewPCG(1, 2))
-	n := newNet(cfg.Inputs, cfg.HiddenSize, cfg.Outputs, randomGenome(GenomeLen(cfg.Inputs, cfg.HiddenSize, cfg.Outputs), rng))
+	n := newNet(cfg.Inputs, cfg.HiddenSize, cfg.Outputs, gacore.RandomGenome(GenomeLen(cfg.Inputs, cfg.HiddenSize, cfg.Outputs), rng))
 	x := make([]float64, cfg.Inputs)
 	for b.Loop() {
 		n.forward(x)
