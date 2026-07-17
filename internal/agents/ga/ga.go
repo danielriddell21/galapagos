@@ -7,13 +7,10 @@ import (
 	"slices"
 
 	"github.com/danielriddell21/galapagos/internal/core"
+	gacore "github.com/danielriddell21/galapagos/pkg/ga"
 )
 
-const (
-	streamInit      uint64 = 0x53c5ff8e3d9b1a77
-	streamEvolve    uint64 = 0x6a09e667f3bcc908
-	streamImmigrant uint64 = 0x9e3779b97f4a7c15
-)
+const streamInit uint64 = 0x53c5ff8e3d9b1a77
 
 type Config struct {
 	Population     int
@@ -80,7 +77,7 @@ func New(cfg Config) *Population {
 	p := &Population{cfg: cfg, members: make([]*individual, cfg.Population)}
 	for i := range cfg.Population {
 		rng := rand.New(rand.NewPCG(uint64(cfg.Seed)^streamInit, uint64(i)))
-		p.members[i] = newIndividual(cfg, randomGenome(genomeLen, rng))
+		p.members[i] = newIndividual(cfg, gacore.RandomGenome(genomeLen, rng))
 	}
 	return p
 }
@@ -106,10 +103,10 @@ func (p *Population) Observe(s core.State, a core.Action, r core.Reward, next co
 
 func (p *Population) EndEpisode(total core.Reward) {}
 
-func (p *Population) Best() []float64 { return clone(p.best().genome) }
+func (p *Population) Best() []float64 { return slices.Clone(p.best().genome) }
 
 func (p *Population) BestPolicy() func(obs []float64) []float64 {
-	return newNet(p.cfg.Inputs, p.cfg.HiddenSize, p.cfg.Outputs, clone(p.best().genome)).forward
+	return newNet(p.cfg.Inputs, p.cfg.HiddenSize, p.cfg.Outputs, slices.Clone(p.best().genome)).forward
 }
 
 func (p *Population) SetMemberGenome(i int, genome []float64) error {
@@ -119,7 +116,7 @@ func (p *Population) SetMemberGenome(i int, genome []float64) error {
 	if want := GenomeLen(p.cfg.Inputs, p.cfg.HiddenSize, p.cfg.Outputs); len(genome) != want {
 		return fmt.Errorf("genome length %d does not match shape (want %d)", len(genome), want)
 	}
-	p.members[i] = newIndividual(p.cfg, clone(genome))
+	p.members[i] = newIndividual(p.cfg, slices.Clone(genome))
 	return nil
 }
 
@@ -130,66 +127,44 @@ func (p *Population) best() *individual {
 }
 
 func (p *Population) Evolve() {
-	rng := rand.New(rand.NewPCG(uint64(p.cfg.Seed)^streamEvolve, uint64(p.gen)))
 	n := len(p.members)
+	genomes := make([][]float64, n)
+	fitness := make([]float64, n)
+	for i, m := range p.members {
+		genomes[i], fitness[i] = m.genome, float64(m.fitness)
+	}
 
-	ranked := slices.Clone(p.members)
-	slices.SortFunc(ranked, func(a, b *individual) int {
-		return cmpReward(b.fitness, a.fitness) // descending
-	})
-
-	// Track stagnation on the best fitness so mutation can adapt: timid while the
-	// champion keeps improving, aggressive once it plateaus.
-	if best := ranked[0].fitness; !p.hasBest || best > p.bestSeen {
+	// Track stagnation on the best fitness so the generic core can adapt mutation:
+	// timid while the champion keeps improving, aggressive once it plateaus.
+	best := core.Reward(fitness[0])
+	for _, f := range fitness[1:] {
+		best = max(best, core.Reward(f))
+	}
+	if !p.hasBest || best > p.bestSeen {
 		p.bestSeen, p.stalled, p.hasBest = best, 0, true
 	} else {
 		p.stalled++
 	}
-	rate, std := p.cfg.MutationRate, p.cfg.MutationStd
-	if p.cfg.StagnationWindow > 0 && p.stalled >= p.cfg.StagnationWindow {
-		// While the champion is stuck, widen the breeding mutation to explore past
-		// the local optimum. A fixed, moderate boost works better than escalating
-		// it further, which degrades into an unproductive random search.
-		rate = min(1, rate*p.cfg.HyperMutation)
-		std *= p.cfg.HyperMutation
-	}
 
-	eliteCount := max(1, int(p.cfg.EliteFraction*float64(n)))
-	immigrantCount := int(p.cfg.ImmigrantFraction * float64(n))
-	if eliteCount+immigrantCount > n {
-		immigrantCount = n - eliteCount
+	next := gacore.Reproduce(p.gaConfig(), genomes, fitness, p.gen, p.stalled)
+	p.members = make([]*individual, n)
+	for i, g := range next {
+		p.members[i] = newIndividual(p.cfg, g)
 	}
-
-	next := make([]*individual, 0, n)
-	for i := range eliteCount {
-		next = append(next, newIndividual(p.cfg, clone(ranked[i].genome)))
-	}
-	genomeLen := GenomeLen(p.cfg.Inputs, p.cfg.HiddenSize, p.cfg.Outputs)
-	for i := range immigrantCount {
-		irng := rand.New(rand.NewPCG(uint64(p.cfg.Seed)^streamImmigrant, uint64(p.gen)*uint64(n)+uint64(i)))
-		next = append(next, newIndividual(p.cfg, randomGenome(genomeLen, irng)))
-	}
-	for len(next) < n {
-		a := tournament(ranked, p.cfg.TournamentSize, rng)
-		b := tournament(ranked, p.cfg.TournamentSize, rng)
-		child := crossover(a.genome, b.genome, rng)
-		mutate(child, rate, std, rng)
-		next = append(next, newIndividual(p.cfg, child))
-	}
-
-	p.members = next
 	p.gen++
 }
 
-func tournament(pop []*individual, size int, rng *rand.Rand) *individual {
-	best := pop[rng.IntN(len(pop))]
-	for range size - 1 {
-		c := pop[rng.IntN(len(pop))]
-		if c.fitness > best.fitness {
-			best = c
-		}
+func (p *Population) gaConfig() gacore.Config {
+	return gacore.Config{
+		EliteFraction:     p.cfg.EliteFraction,
+		MutationRate:      p.cfg.MutationRate,
+		MutationStd:       p.cfg.MutationStd,
+		TournamentSize:    p.cfg.TournamentSize,
+		ImmigrantFraction: p.cfg.ImmigrantFraction,
+		StagnationWindow:  p.cfg.StagnationWindow,
+		HyperMutation:     p.cfg.HyperMutation,
+		Seed:              p.cfg.Seed,
 	}
-	return best
 }
 
 func cmpReward(a, b core.Reward) int {

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/danielriddell21/galapagos/internal/core"
+	gacore "github.com/danielriddell21/galapagos/pkg/ga"
 )
 
 func testConfig() Config {
@@ -33,7 +34,7 @@ func TestGenomeLen(t *testing.T) {
 func TestNetForwardShapeAndRange(t *testing.T) {
 	cfg := testConfig()
 	rng := rand.New(rand.NewPCG(1, 2))
-	g := randomGenome(GenomeLen(cfg.Inputs, cfg.HiddenSize, cfg.Outputs), rng)
+	g := gacore.RandomGenome(GenomeLen(cfg.Inputs, cfg.HiddenSize, cfg.Outputs), rng)
 	n := newNet(cfg.Inputs, cfg.HiddenSize, cfg.Outputs, g)
 	out := n.forward(make([]float64, cfg.Inputs))
 	if len(out) != cfg.Outputs {
@@ -50,7 +51,7 @@ func TestNetForwardShapeAndRange(t *testing.T) {
 func TestActionShapeAndFinite(t *testing.T) {
 	cfg := testConfig()
 	rng := rand.New(rand.NewPCG(5, 9))
-	m := newIndividual(cfg, randomGenome(GenomeLen(cfg.Inputs, cfg.HiddenSize, cfg.Outputs), rng))
+	m := newIndividual(cfg, gacore.RandomGenome(GenomeLen(cfg.Inputs, cfg.HiddenSize, cfg.Outputs), rng))
 	for range 100 {
 		obs := make([]float64, cfg.Inputs)
 		for i := range obs {
@@ -109,30 +110,6 @@ func TestNewSetsDiversityDefaults(t *testing.T) {
 	if p.cfg.ImmigrantFraction <= 0 || p.cfg.StagnationWindow <= 0 || p.cfg.HyperMutation <= 1 {
 		t.Fatalf("diversity defaults not set: imm=%v win=%d hyper=%v",
 			p.cfg.ImmigrantFraction, p.cfg.StagnationWindow, p.cfg.HyperMutation)
-	}
-}
-
-func TestEvolveInjectsImmigrants(t *testing.T) {
-	p := New(testConfig())
-	assignFitness(p)
-	n := len(p.members)
-	eliteCount := max(1, int(p.cfg.EliteFraction*float64(n)))
-	immigrantCount := int(p.cfg.ImmigrantFraction * float64(n))
-	if immigrantCount == 0 {
-		t.Fatal("expected at least one immigrant per generation")
-	}
-	p.Evolve()
-
-	// The immigrant slots (just after the elites) must be the fresh random
-	// genomes drawn from the dedicated immigrant stream for generation 0.
-	genomeLen := GenomeLen(p.cfg.Inputs, p.cfg.HiddenSize, p.cfg.Outputs)
-	members := collect(p)
-	for i := range immigrantCount {
-		irng := rand.New(rand.NewPCG(uint64(p.cfg.Seed)^streamImmigrant, uint64(i)))
-		want := randomGenome(genomeLen, irng)
-		if !slices.Equal(members[eliteCount+i].Genome(), want) {
-			t.Fatalf("immigrant %d is not the expected fresh random genome", i)
-		}
 	}
 }
 
