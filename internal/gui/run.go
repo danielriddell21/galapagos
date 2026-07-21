@@ -13,6 +13,8 @@ import (
 	eb "github.com/hajimehoshi/ebiten/v2"
 	ebinput "github.com/hajimehoshi/ebiten/v2/inpututil"
 
+	"github.com/danielriddell21/crucible/record"
+
 	"github.com/danielriddell21/galapagos/internal/core"
 	ebrender "github.com/danielriddell21/galapagos/internal/render/ebiten"
 )
@@ -37,7 +39,7 @@ type game struct {
 	showRays bool
 	speed    int
 
-	rec   *recorder
+	rec   *record.Recorder
 	pix   []byte
 	saved bool
 }
@@ -51,7 +53,7 @@ func Run(run Config, log *slog.Logger) error {
 		speed: 1,
 	}
 	if run.RecordPath != "" {
-		g.rec = newRecorder(run.RecordFrames, run.RecordFPS, run.RecordScale)
+		g.rec = record.NewRecorder(run.RecordFPS, run.RecordScale, run.RecordFrames)
 		g.speed = 2 // a steady pace for a lively recording
 	}
 	eb.SetWindowSize(screenW, screenH)
@@ -63,12 +65,12 @@ func Run(run Config, log *slog.Logger) error {
 }
 
 func (g *game) Update() error {
-	if g.rec != nil && g.rec.done {
+	if g.rec != nil && g.rec.Done() {
 		if !g.saved {
-			if err := g.rec.save(g.run.RecordPath); err != nil {
+			if err := g.rec.Save(g.run.RecordPath); err != nil {
 				g.log.Error("record failed", "err", err)
 			} else {
-				g.log.Info("recorded", "path", g.run.RecordPath, "frames", len(g.rec.frames))
+				g.log.Info("recorded", "path", g.run.RecordPath, "frames", g.rec.Len())
 			}
 			g.saved = true
 		}
@@ -141,12 +143,12 @@ func (g *game) Draw(screen *eb.Image) {
 	g.drawKeymap()
 	g.drawSparkline(g.run.Series())
 
-	if g.rec != nil && !g.rec.done {
+	if g.rec != nil && !g.rec.Done() {
 		if g.pix == nil {
 			g.pix = make([]byte, 4*screenW*screenH)
 		}
 		screen.ReadPixels(g.pix)
-		g.rec.add(&image.RGBA{Pix: g.pix, Stride: 4 * screenW, Rect: image.Rect(0, 0, screenW, screenH)})
+		g.rec.Add(&image.RGBA{Pix: g.pix, Stride: 4 * screenW, Rect: image.Rect(0, 0, screenW, screenH)})
 	}
 }
 
