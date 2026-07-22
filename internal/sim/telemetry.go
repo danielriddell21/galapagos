@@ -3,42 +3,9 @@ package sim
 import (
 	"log/slog"
 	"slices"
+
+	"github.com/danielriddell21/crucible/ring"
 )
-
-type Ring[T any] struct {
-	buf  []T
-	next int
-	full bool
-}
-
-func NewRing[T any](capacity int) *Ring[T] {
-	return &Ring[T]{buf: make([]T, max(capacity, 1))}
-}
-
-func (r *Ring[T]) Push(v T) {
-	r.buf[r.next] = v
-	r.next = (r.next + 1) % len(r.buf)
-	if r.next == 0 {
-		r.full = true
-	}
-}
-
-func (r *Ring[T]) Len() int {
-	if r.full {
-		return len(r.buf)
-	}
-	return r.next
-}
-
-func (r *Ring[T]) Slice() []T {
-	if !r.full {
-		return slices.Clone(r.buf[:r.next])
-	}
-	out := make([]T, 0, len(r.buf))
-	out = append(out, r.buf[r.next:]...)
-	out = append(out, r.buf[:r.next]...)
-	return out
-}
 
 type GenStats struct {
 	Generation int
@@ -64,12 +31,12 @@ func StatsFrom(generation int, fitness []float64) GenStats {
 }
 
 type Telemetry struct {
-	history *Ring[GenStats]
+	history *ring.Ring[GenStats]
 	log     *slog.Logger
 }
 
 func NewTelemetry(historyLen int, log *slog.Logger) *Telemetry {
-	return &Telemetry{history: NewRing[GenStats](historyLen), log: log}
+	return &Telemetry{history: ring.New[GenStats](historyLen), log: log}
 }
 
 func (t *Telemetry) Publish(s GenStats) {
