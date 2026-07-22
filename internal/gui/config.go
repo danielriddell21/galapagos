@@ -1,6 +1,10 @@
 package gui
 
-import "github.com/danielriddell21/galapagos/internal/core"
+import (
+	"github.com/danielriddell21/crucible/record"
+
+	"github.com/danielriddell21/galapagos/internal/core"
+)
 
 type Config struct {
 	Title      string
@@ -22,8 +26,5 @@ type Config struct {
 	Load       func() error
 	Regenerate func(seed int64)
 
-	RecordPath   string
-	RecordFrames int
-	RecordFPS    int
-	RecordScale  int
+	Rec record.Options
 }

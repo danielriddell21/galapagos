@@ -18,12 +18,7 @@ type runCaps struct {
 }
 
 func recordConfig() gui.Config {
-	return gui.Config{
-		RecordPath:   recordPath,
-		RecordFrames: recordFrames,
-		RecordFPS:    recordFPS,
-		RecordScale:  recordScale,
-	}
+	return gui.Config{Rec: rec}
 }
 
 func populationGUI(title string, env core.MultiEnvironment, pop core.PopulationAgent, maxSteps int, seed int64, caps runCaps) gui.Config {
