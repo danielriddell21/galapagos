@@ -4,14 +4,11 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+
+	"github.com/danielriddell21/crucible/record"
 )
 
-var (
-	recordPath   string
-	recordFrames int
-	recordFPS    int
-	recordScale  int
-)
+var rec record.Options
 
 var rootCmd = &cobra.Command{
 	Use:           "galapagos",
@@ -22,11 +19,9 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	f := rootCmd.PersistentFlags()
-	f.StringVar(&recordPath, "record", "", "record the window to an animated GIF at this path, then exit")
-	f.IntVar(&recordFrames, "record-frames", 150, "number of frames to record")
-	f.IntVar(&recordFPS, "record-fps", 25, "frames per second of the recording")
-	f.IntVar(&recordScale, "record-scale", 2, "integer downscale factor for the GIF")
+	// Preserve galapagos's own defaults; the flag names come from crucible.
+	rec.FPS, rec.Frames, rec.Scale = 25, 150, 2
+	rec.AddFlags(rootCmd.PersistentFlags())
 	rootCmd.AddCommand(completionCmd())
 }
 

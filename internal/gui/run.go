@@ -52,8 +52,8 @@ func Run(run Config, log *slog.Logger) error {
 		start: time.Now(),
 		speed: 1,
 	}
-	if run.RecordPath != "" {
-		g.rec = record.NewRecorder(run.RecordFPS, run.RecordScale, run.RecordFrames)
+	if run.Rec.Recording() {
+		g.rec = record.New(run.Rec)
 		g.speed = 2 // a steady pace for a lively recording
 	}
 	eb.SetWindowSize(screenW, screenH)
@@ -67,10 +67,10 @@ func Run(run Config, log *slog.Logger) error {
 func (g *game) Update() error {
 	if g.rec != nil && g.rec.Done() {
 		if !g.saved {
-			if err := g.rec.Save(g.run.RecordPath); err != nil {
+			if err := g.rec.Save(g.run.Rec.Path); err != nil {
 				g.log.Error("record failed", "err", err)
 			} else {
-				g.log.Info("recorded", "path", g.run.RecordPath, "frames", g.rec.Len())
+				g.log.Info("recorded", "path", g.run.Rec.Path, "frames", g.rec.Len())
 			}
 			g.saved = true
 		}
