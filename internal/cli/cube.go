@@ -10,13 +10,15 @@ import (
 	rubix "github.com/danielriddell21/rubix/pkg/cube"
 	"github.com/spf13/cobra"
 
+	"github.com/danielriddell21/crucible/keymap"
+
 	"github.com/danielriddell21/galapagos/internal/agents/efficientcube"
 	"github.com/danielriddell21/galapagos/internal/core"
 	"github.com/danielriddell21/galapagos/internal/envs/cube"
 	"github.com/danielriddell21/galapagos/internal/gui"
 )
 
-var cubeKeymap = []string{"space pause", "+/- speed", "r new scrambles"}
+var cubeKeymap = []keymap.Binding{{Key: "space", Action: "pause"}, {Key: "+/-", Action: "speed"}, {Key: "r", Action: "new scrambles"}}
 
 func coupleScramble(target, scrambleK, maxDepth int) (k, depth int) {
 	if scrambleK < target {

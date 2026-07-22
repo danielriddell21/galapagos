@@ -3,13 +3,15 @@ package cli
 import (
 	"fmt"
 
+	"github.com/danielriddell21/crucible/keymap"
+
 	"github.com/danielriddell21/galapagos/internal/core"
 	"github.com/danielriddell21/galapagos/internal/gui"
 	"github.com/danielriddell21/galapagos/internal/sim"
 )
 
 type runCaps struct {
-	keymap  []string
+	keymap  []keymap.Binding
 	bounds  func() (minX, minY, maxX, maxY float64, ok bool)
 	leader  func(best int) (x, y float64, ok bool)
 	sensors func(best int) (origin core.Vec2, ends []core.Vec2, ok bool)

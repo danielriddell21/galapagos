@@ -9,10 +9,12 @@ import (
 	"log/slog"
 	"math/rand/v2"
 	"time"
+	"unicode/utf8"
 
 	eb "github.com/hajimehoshi/ebiten/v2"
 	ebinput "github.com/hajimehoshi/ebiten/v2/inpututil"
 
+	"github.com/danielriddell21/crucible/keymap"
 	"github.com/danielriddell21/crucible/record"
 
 	"github.com/danielriddell21/galapagos/internal/core"
@@ -177,10 +179,10 @@ func (g *game) drawHUD() {
 }
 
 func (g *game) drawKeymap() {
-	y := 10
-	for _, line := range g.run.Keymap {
-		g.ren.Text(screenW-150, float64(y), line)
-		y += 16
+	// The renderer draws through the 6px-wide debug font, so measure by rune.
+	face := keymap.Face{LineHeight: 16, Measure: func(s string) int { return utf8.RuneCountInString(s) * 6 }}
+	for _, line := range keymap.BottomBar(g.run.Keymap, screenW, screenH, 10, face) {
+		g.ren.Text(float64(line.X), float64(line.Y), line.Text)
 	}
 }
 

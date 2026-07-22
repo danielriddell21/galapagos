@@ -7,6 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/danielriddell21/crucible/keymap"
+
 	"github.com/danielriddell21/galapagos/internal/agents/ga"
 	"github.com/danielriddell21/galapagos/internal/agents/neat"
 	"github.com/danielriddell21/galapagos/internal/config"
@@ -16,9 +18,17 @@ import (
 )
 
 var (
-	racingKeymap = []string{"space pause", "f follow", "+/- speed", "r new track", "d rays", "s save", "l load"}
-	swarmKeymap  = []string{"space pause", "+/- speed", "r regenerate"}
-	onlineKeymap = []string{"space pause", "+/- speed", "r regenerate"}
+	racingKeymap = []keymap.Binding{
+		{Key: "space", Action: "pause"},
+		{Key: "f", Action: "follow"},
+		{Key: "+/-", Action: "speed"},
+		{Key: "r", Action: "new track"},
+		{Key: "d", Action: "rays"},
+		{Key: "s", Action: "save"},
+		{Key: "l", Action: "load"},
+	}
+	swarmKeymap  = []keymap.Binding{{Key: "space", Action: "pause"}, {Key: "+/-", Action: "speed"}, {Key: "r", Action: "regenerate"}}
+	onlineKeymap = []keymap.Binding{{Key: "space", Action: "pause"}, {Key: "+/-", Action: "speed"}, {Key: "r", Action: "regenerate"}}
 )
 
 func resolveSeed(cmd *cobra.Command, configSeed int64, log *slog.Logger) int64 {
