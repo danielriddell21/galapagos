@@ -200,7 +200,7 @@ func (p *Population) allocate(species [][]*genome) []int {
 		idx  int
 		frac float64
 	}
-	var rems []rem
+	rems := make([]rem, 0, len(species))
 	assigned := 0
 	for si := range species {
 		exact := shared[si] / total * float64(p.cfg.Population)
