@@ -3,7 +3,7 @@ module github.com/danielriddell21/galapagos
 go 1.26.3
 
 require (
-	github.com/danielriddell21/crucible v0.7.1-0.20260722210514-3eee45c01f17
+	github.com/danielriddell21/crucible v0.12.0
 	github.com/danielriddell21/gambit v0.1.0
 	github.com/danielriddell21/rubix v0.1.1
 	github.com/hajimehoshi/ebiten/v2 v2.9.9

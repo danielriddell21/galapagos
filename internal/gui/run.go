@@ -14,6 +14,7 @@ import (
 	ebinput "github.com/hajimehoshi/ebiten/v2/inpututil"
 
 	"github.com/danielriddell21/crucible/record"
+	"github.com/danielriddell21/crucible/window"
 
 	"github.com/danielriddell21/galapagos/internal/core"
 	ebrender "github.com/danielriddell21/galapagos/internal/render/ebiten"
@@ -56,8 +57,7 @@ func Run(run Config, log *slog.Logger) error {
 		g.rec = record.New(run.Rec)
 		g.speed = 2 // a steady pace for a lively recording
 	}
-	eb.SetWindowSize(screenW, screenH)
-	eb.SetWindowTitle(run.Title)
+	window.Configure(window.Options{Title: run.Title, Width: screenW, Height: screenH, MinWidth: screenW / 2, MinHeight: screenH / 2})
 	if err := eb.RunGame(g); err != nil {
 		return fmt.Errorf("run window: %w", err)
 	}
