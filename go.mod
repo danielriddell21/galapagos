@@ -3,7 +3,7 @@ module github.com/danielriddell21/galapagos
 go 1.26.3
 
 require (
-	github.com/danielriddell21/crucible v0.12.0
+	github.com/danielriddell21/crucible v0.13.1-0.20260806195235-5ef8bbcc86e1
 	github.com/danielriddell21/gambit v0.1.0
 	github.com/danielriddell21/rubix v0.1.1
 	github.com/hajimehoshi/ebiten/v2 v2.9.9
@@ -18,6 +18,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jezek/xgb v1.1.1 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
+	golang.org/x/image v0.44.0 // indirect
 	golang.org/x/sync v0.21.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect
 )
