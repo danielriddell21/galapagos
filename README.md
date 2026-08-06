@@ -1,6 +1,6 @@
 # galapagos
 
-> *Watch algorithms learn.*
+> *galapagos* — evolution, observed.
 
 [![CI](https://github.com/danielriddell21/galapagos/actions/workflows/ci.yaml/badge.svg)](https://github.com/danielriddell21/galapagos/actions/workflows/ci.yaml)
 [![codecov](https://codecov.io/gh/danielriddell21/galapagos/graph/badge.svg)](https://codecov.io/gh/danielriddell21/galapagos)
