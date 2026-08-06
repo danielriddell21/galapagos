@@ -17,19 +17,12 @@ type runCaps struct {
 	load    func() error
 }
 
-func recordConfig() gui.Config {
-	return gui.Config{Rec: rec}
-}
-
 func populationGUI(title string, env core.MultiEnvironment, pop core.PopulationAgent, maxSteps int, seed int64, caps runCaps) gui.Config {
 	live := sim.NewLive(env, pop, maxSteps, seed)
 	tel := sim.NewTelemetry(4096, nil)
 	best := live.BestIndex
 
-	cfg := recordConfig()
-	cfg.Title = title
-	cfg.Keymap = caps.keymap
-	cfg.Population = true
+	cfg := gui.Config{Title: title, Keymap: caps.keymap, Population: true}
 	cfg.Step = live.Step
 	cfg.Complete = func() { tel.Publish(sim.StatsFrom(pop.Generation(), live.Fitness())) }
 	cfg.Next = live.NextGeneration
@@ -70,9 +63,7 @@ func onlineGUI(title string, env core.Environment, agent core.Agent, maxSteps in
 	solver, goalBased := env.(interface{ Solved() bool })
 	solved := 0
 
-	cfg := recordConfig()
-	cfg.Title = title
-	cfg.Keymap = caps.keymap
+	cfg := gui.Config{Title: title, Keymap: caps.keymap}
 	cfg.Step = ep.Step
 	cfg.Complete = func() {
 		returns = append(returns, float64(ep.Return()))

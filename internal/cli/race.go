@@ -74,6 +74,16 @@ func raceHeadless(c config.Racing, out string, log *slog.Logger) error {
 }
 
 func raceGUI(c config.Racing, out string, log *slog.Logger) error {
+	if err := gui.Run(raceConfig(c, out), log); err != nil {
+		return fmt.Errorf("run gui: %w", err)
+	}
+	return nil
+}
+
+// raceConfig wires the racing environment and its population into a run the
+// display can drive. It is display-free, so the same wiring backs the window
+// and the headless recordings in tools/demogen.
+func raceConfig(c config.Racing, out string) gui.Config {
 	env := racing.New(racingConfigFrom(c))
 	agent := buildAgent(c)
 
@@ -108,9 +118,5 @@ func raceGUI(c config.Racing, out string, log *slog.Logger) error {
 		}
 	}
 
-	run := populationGUI("Galapagos — race ("+c.Agent+")", env, agent, c.MaxSteps, c.Seed, caps)
-	if err := gui.Run(run, log); err != nil {
-		return fmt.Errorf("run gui: %w", err)
-	}
-	return nil
+	return populationGUI("Galapagos — race ("+c.Agent+")", env, agent, c.MaxSteps, c.Seed, caps)
 }

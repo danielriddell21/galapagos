@@ -28,75 +28,96 @@ func coupleScramble(target, scrambleK, maxDepth int) (k, depth int) {
 	return scrambleK, maxDepth
 }
 
+// cubeParams are the cube command's tunables. The values defaultCube returns
+// are the flag defaults, and the demo clip runs with them unchanged, so the
+// recorded media shows what the command does.
+type cubeParams struct {
+	// training
+	iters  int
+	batch  int
+	scrK   int
+	hidden []int
+	lr     float64
+	model  string
+	train  bool
+	// solving / eval
+	evalN    int
+	evalDep  int
+	beamW    int
+	maxDepth int
+	// run
+	guiDepth int
+	cubes    int
+	seed     int64
+	headless bool
+}
+
+func defaultCube() cubeParams {
+	return cubeParams{
+		iters: 3000, batch: 256, scrK: 8, hidden: []int{128, 64}, lr: 1e-3, train: true,
+		evalN: 100, evalDep: 6, beamW: 2000, maxDepth: 20, guiDepth: 8, cubes: 1,
+	}
+}
+
+// solve trains or loads the policy and returns it with the beam search the
+// scramble depth calls for.
+func (c cubeParams) solve(log *slog.Logger) (*efficientcube.Policy, efficientcube.BeamConfig, error) {
+	// Couple training depth and search horizon to the deepest scramble we
+	// will face, so a deeper --scramble is always trained for and solvable
+	// rather than silently undertrained. Beyond ~8 it stays best-effort.
+	target := c.guiDepth
+	if c.headless {
+		target = c.evalDep
+	}
+	scrK, maxDepth := coupleScramble(target, c.scrK, c.maxDepth)
+	log.Info("scramble", "depth", target, "train_k", scrK, "max_depth", maxDepth)
+
+	policy, err := loadOrTrainPolicy(c.model, c.train, efficientcube.TrainConfig{
+		Hidden: c.hidden, K: scrK, Batch: c.batch, Iters: c.iters, LR: c.lr, Seed: c.seed,
+	}, log)
+	if err != nil {
+		return nil, efficientcube.BeamConfig{}, err
+	}
+	return policy, efficientcube.BeamConfig{Width: c.beamW, MaxDepth: maxDepth}, nil
+}
+
 func init() {
-	var (
-		// training
-		iters  int
-		batch  int
-		scrK   int
-		hidden []int
-		lr     float64
-		model  string
-		train  bool
-		// solving / eval
-		evalN    int
-		evalDep  int
-		beamW    int
-		maxDepth int
-		// run
-		guiDepth int
-		cubes    int
-		seed     int64
-		headless bool
-	)
+	c := defaultCube()
+	var seed int64
 	cmd := &cobra.Command{
 		Use:   "cube",
 		Short: "Learn to solve a Rubik's cube with EfficientCube (self-supervised policy + beam search)",
 		Long:  "Trains an EfficientCube policy by self-supervision (predicting the move that reverses each scramble step), then solves scrambles with beam search. The window shows a cube being solved.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			log := slog.New(slog.NewTextHandler(os.Stderr, nil))
-			seed = resolveSeed(cmd, 0, log)
+			c.seed = resolveSeed(cmd, 0, log)
 
-			// Couple training depth and search horizon to the deepest scramble we
-			// will face, so a deeper --scramble is always trained for and solvable
-			// rather than silently undertrained. Beyond ~8 it stays best-effort.
-			target := guiDepth
-			if headless {
-				target = evalDep
-			}
-			scrK, maxDepth = coupleScramble(target, scrK, maxDepth)
-			log.Info("scramble", "depth", target, "train_k", scrK, "max_depth", maxDepth)
-
-			policy, err := loadOrTrainPolicy(model, train, efficientcube.TrainConfig{
-				Hidden: hidden, K: scrK, Batch: batch, Iters: iters, LR: lr, Seed: seed,
-			}, log)
+			policy, beam, err := c.solve(log)
 			if err != nil {
 				return err
 			}
-			beam := efficientcube.BeamConfig{Width: beamW, MaxDepth: maxDepth}
-
-			if headless {
-				reportCubeEval(policy, evalDep, evalN, beam, seed)
+			if c.headless {
+				reportCubeEval(policy, c.evalDep, c.evalN, beam, c.seed)
 				return nil
 			}
-			return cubeWall(policy, beam, cubes, guiDepth, seed, log)
+			return cubeWall(policy, beam, c.cubes, c.guiDepth, c.seed, log)
 		},
 	}
-	cmd.Flags().IntVar(&iters, "iters", 3000, "training iterations")
-	cmd.Flags().IntVar(&batch, "batch", 256, "examples per training step")
-	cmd.Flags().IntVar(&scrK, "scramble-k", 8, "max scramble length used for training (auto-raised to the scramble depth)")
-	cmd.Flags().IntSliceVar(&hidden, "hidden", []int{128, 64}, "hidden layer sizes")
-	cmd.Flags().Float64Var(&lr, "lr", 1e-3, "Adam learning rate")
-	cmd.Flags().StringVar(&model, "model", "", "policy file to load (skip training) or save to")
-	cmd.Flags().BoolVar(&train, "train", true, "train a policy (false loads --model)")
-	cmd.Flags().IntVar(&evalN, "eval-scrambles", 100, "scrambles to solve in headless eval")
-	cmd.Flags().IntVar(&evalDep, "eval-depth", 6, "scramble depth for headless eval")
-	cmd.Flags().IntVar(&beamW, "beam-width", 2000, "beam search width (wider solves deeper scrambles more reliably)")
-	cmd.Flags().IntVar(&maxDepth, "max-depth", 20, "maximum solution length searched")
-	cmd.Flags().IntVar(&guiDepth, "scramble", 8, "scramble depth shown in the window")
-	cmd.Flags().IntVar(&cubes, "cubes", 1, "number of cubes solved in parallel in the window")
+	cmd.Flags().IntVar(&c.iters, "iters", c.iters, "training iterations")
+	cmd.Flags().IntVar(&c.batch, "batch", c.batch, "examples per training step")
+	cmd.Flags().IntVar(&c.scrK, "scramble-k", c.scrK, "max scramble length used for training (auto-raised to the scramble depth)")
+	cmd.Flags().IntSliceVar(&c.hidden, "hidden", c.hidden, "hidden layer sizes")
+	cmd.Flags().Float64Var(&c.lr, "lr", c.lr, "Adam learning rate")
+	cmd.Flags().StringVar(&c.model, "model", c.model, "policy file to load (skip training) or save to")
+	cmd.Flags().BoolVar(&c.train, "train", c.train, "train a policy (false loads --model)")
+	cmd.Flags().IntVar(&c.evalN, "eval-scrambles", c.evalN, "scrambles to solve in headless eval")
+	cmd.Flags().IntVar(&c.evalDep, "eval-depth", c.evalDep, "scramble depth for headless eval")
+	cmd.Flags().IntVar(&c.beamW, "beam-width", c.beamW, "beam search width (wider solves deeper scrambles more reliably)")
+	cmd.Flags().IntVar(&c.maxDepth, "max-depth", c.maxDepth, "maximum solution length searched")
+	cmd.Flags().IntVar(&c.guiDepth, "scramble", c.guiDepth, "scramble depth shown in the window")
+	cmd.Flags().IntVar(&c.cubes, "cubes", c.cubes, "number of cubes solved in parallel in the window")
 	cmd.Flags().Int64Var(&seed, "seed", 0, "run seed (default: random, logged)")
-	cmd.Flags().BoolVar(&headless, "headless", false, "train and evaluate without a window")
+	cmd.Flags().BoolVar(&c.headless, "headless", false, "train and evaluate without a window")
 	rootCmd.AddCommand(cmd)
 }
 
@@ -148,6 +169,16 @@ func reportCubeEval(p *efficientcube.Policy, depth, n int, beam efficientcube.Be
 }
 
 func cubeWall(p *efficientcube.Policy, beam efficientcube.BeamConfig, count, depth int, seed int64, log *slog.Logger) error {
+	if err := gui.Run(cubeConfig(p, beam, count, depth, seed), log); err != nil {
+		return fmt.Errorf("run gui: %w", err)
+	}
+	return nil
+}
+
+// cubeConfig wires a wall of cubes and their solver into a run the display can
+// drive. It is display-free, so the same wiring backs the window and the
+// headless recordings in tools/demogen.
+func cubeConfig(p *efficientcube.Policy, beam efficientcube.BeamConfig, count, depth int, seed int64) gui.Config {
 	const gap = cube.NetW * 0.15
 	cols := int(math.Ceil(math.Sqrt(float64(count))))
 	rows := (count + cols - 1) / cols
@@ -176,8 +207,7 @@ func cubeWall(p *efficientcube.Policy, beam efficientcube.BeamConfig, count, dep
 
 	solvedCount := func() int { return countSolved(states) }
 
-	run := recordConfig()
-	run.Title = "Galapagos — cube (efficientcube)"
+	run := gui.Config{Title: "Galapagos — cube (efficientcube)"}
 	run.Keymap = cubeKeymap
 	run.Step = func() bool {
 		if !cubesPending(states, plans, idx) {
@@ -217,10 +247,7 @@ func cubeWall(p *efficientcube.Policy, beam efficientcube.BeamConfig, count, dep
 	run.Leader = func() (float64, float64, bool) { return 0, 0, false }
 	run.Sensors = func() (core.Vec2, []core.Vec2, bool) { return core.Vec2{}, nil, false }
 	run.Regenerate = generate
-	if err := gui.Run(run, log); err != nil {
-		return fmt.Errorf("run gui: %w", err)
-	}
-	return nil
+	return run
 }
 
 func cubesPending(states []rubix.Cube, plans [][]rubix.Move, idx []int) bool {

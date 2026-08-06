@@ -26,5 +26,6 @@ type Config struct {
 	Load       func() error
 	Regenerate func(seed int64)
 
+	// Rec names the recording [Render] writes; it is set by tools/demogen.
 	Rec record.Options
 }
