@@ -5,7 +5,6 @@ package gui
 import (
 	"fmt"
 	"image"
-	"image/color"
 	"log/slog"
 	"math/rand/v2"
 	"time"
@@ -16,18 +15,12 @@ import (
 	"github.com/danielriddell21/crucible/record"
 	"github.com/danielriddell21/crucible/window"
 
-	"github.com/danielriddell21/galapagos/internal/core"
 	ebrender "github.com/danielriddell21/galapagos/internal/render/ebiten"
 )
 
 func Available() bool { return true }
 
 func randomSeed() int64 { return int64(rand.Uint64() >> 1) }
-
-const (
-	screenW = 1024
-	screenH = 768
-)
 
 type game struct {
 	run   Config
@@ -127,21 +120,16 @@ func (g *game) handleInput() {
 }
 
 func (g *game) Draw(screen *eb.Image) {
-	screen.Fill(color.RGBA{18, 20, 26, 255})
+	screen.Fill(Background)
 	g.ren.Begin(screen)
 
-	g.updateCamera()
-	g.run.Render(g.ren)
-	if g.showRays {
-		if origin, ends, ok := g.run.Sensors(); ok {
-			for _, e := range ends {
-				g.ren.Line(origin.X, origin.Y, e.X, e.Y, color.RGBA{0, 200, 120, 160})
-			}
-		}
-	}
-	g.drawHUD()
-	g.drawKeymap()
-	g.drawSparkline(g.run.Series())
+	DrawFrame(g.ren, g.run, FrameState{
+		Speed:    g.speed,
+		Paused:   g.paused,
+		Elapsed:  time.Since(g.start),
+		ShowRays: g.showRays,
+		Follow:   g.follow,
+	})
 
 	if g.rec != nil && !g.rec.Done() {
 		if g.pix == nil {
@@ -150,71 +138,6 @@ func (g *game) Draw(screen *eb.Image) {
 		screen.ReadPixels(g.pix)
 		g.rec.Add(&image.RGBA{Pix: g.pix, Stride: 4 * screenW, Rect: image.Rect(0, 0, screenW, screenH)})
 	}
-}
-
-func (g *game) updateCamera() {
-	cam := g.ren.Camera()
-	if g.follow {
-		if x, y, ok := g.run.Leader(); ok {
-			cam.Zoom = 1.2
-			cam.Follow(x, y)
-			return
-		}
-	}
-	if minX, minY, maxX, maxY, ok := g.run.Bounds(); ok {
-		cam.FitBounds(minX, minY, maxX, maxY, 0.15)
-	}
-}
-
-func (g *game) drawHUD() {
-	y := 10
-	for _, line := range g.run.HUD() {
-		g.ren.Text(10, float64(y), line)
-		y += 16
-	}
-	g.ren.Text(10, float64(y), fmt.Sprintf("speed x%d%s", g.speed, pausedLabel(g.paused)))
-	g.ren.Text(10, float64(y+16), fmt.Sprintf("elapsed %s", time.Since(g.start).Round(time.Second)))
-}
-
-func (g *game) drawKeymap() {
-	y := 10
-	for _, line := range g.run.Keymap {
-		g.ren.Text(screenW-150, float64(y), line)
-		y += 16
-	}
-}
-
-func (g *game) drawSparkline(series []float64) {
-	if len(series) < 2 {
-		return
-	}
-	const x0, y0, w, h = 10.0, 700.0, 240.0, 50.0
-	lo, hi := series[0], series[0]
-	for _, v := range series {
-		lo, hi = min(lo, v), max(hi, v)
-	}
-	span := max(hi-lo, 1e-9)
-
-	cam := g.ren.Camera()
-	prev := *cam
-	// Centering the camera on the viewport with unit zoom makes world == screen
-	// coordinates, so the HUD draws in screen space.
-	*cam = core.Camera{X: screenW / 2, Y: screenH / 2, Zoom: 1, ViewW: screenW, ViewH: screenH}
-	for i := 1; i < len(series); i++ {
-		ax := x0 + w*float64(i-1)/float64(len(series)-1)
-		bx := x0 + w*float64(i)/float64(len(series)-1)
-		ay := y0 + h - h*(series[i-1]-lo)/span
-		by := y0 + h - h*(series[i]-lo)/span
-		g.ren.Line(ax, ay, bx, by, color.RGBA{255, 215, 0, 255})
-	}
-	*cam = prev
-}
-
-func pausedLabel(p bool) string {
-	if p {
-		return " (paused)"
-	}
-	return ""
 }
 
 func (g *game) Layout(outsideWidth, outsideHeight int) (int, int) {
