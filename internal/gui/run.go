@@ -13,7 +13,7 @@ import (
 
 	"github.com/danielriddell21/crucible/window"
 
-	ebrender "github.com/danielriddell21/galapagos/internal/render/ebiten"
+	"github.com/danielriddell21/galapagos/internal/render/soft"
 )
 
 func Available() bool { return true }
@@ -23,7 +23,7 @@ func randomSeed() int64 { return int64(rand.Uint64() >> 1) }
 type game struct {
 	run   Config
 	log   *slog.Logger
-	ren   *ebrender.Renderer
+	ren   *soft.Renderer
 	start time.Time
 
 	paused   bool
@@ -36,7 +36,7 @@ func Run(run Config, log *slog.Logger) error {
 	g := &game{
 		run:   run,
 		log:   log,
-		ren:   ebrender.New(screenW, screenH),
+		ren:   soft.New(screenW, screenH),
 		start: time.Now(),
 		speed: 1,
 	}
@@ -98,10 +98,11 @@ func (g *game) handleInput() {
 	}
 }
 
+// Draw composes the frame with the software renderer and blits it. The window
+// rasterises exactly what tools/demogen records, so the documentation media and
+// the running app cannot drift apart.
 func (g *game) Draw(screen *eb.Image) {
-	screen.Fill(Background)
-	g.ren.Begin(screen)
-
+	g.ren.Clear(Background)
 	DrawFrame(g.ren, g.run, FrameState{
 		Speed:    g.speed,
 		Paused:   g.paused,
@@ -109,6 +110,7 @@ func (g *game) Draw(screen *eb.Image) {
 		ShowRays: g.showRays,
 		Follow:   g.follow,
 	})
+	screen.WritePixels(g.ren.Image().Pix)
 }
 
 func (g *game) Layout(outsideWidth, outsideHeight int) (int, int) {
