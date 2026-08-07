@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"github.com/danielriddell21/crucible/keymap"
 	"github.com/danielriddell21/crucible/record"
 
 	"github.com/danielriddell21/galapagos/internal/core"
@@ -8,7 +9,7 @@ import (
 
 type Config struct {
 	Title      string
-	Keymap     []string
+	Keymap     []keymap.Binding
 	Population bool
 
 	Step     func() bool
