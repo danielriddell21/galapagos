@@ -54,17 +54,27 @@ func newChessAgent(agent string, obs, act core.Spec, population, depth int, seed
 	return newPopulationAgent(agent, obs, act, population, seed)
 }
 
+// chessParams are the chess command's tunables. The values defaultChess
+// returns are the flag defaults, and the demo clip runs with them unchanged,
+// so the recorded media shows what the command does.
+type chessParams struct {
+	agent       string
+	opponent    string
+	generations int
+	population  int
+	maxPlies    int
+	depth       int
+	seed        int64
+	headless    bool
+}
+
+func defaultChess() chessParams {
+	return chessParams{agent: "ga", opponent: "coevolution", generations: 20, population: 40, maxPlies: 60, depth: 2}
+}
+
 func init() {
-	var (
-		agent       string
-		opponent    string
-		generations int
-		population  int
-		maxPlies    int
-		depth       int
-		seed        int64
-		headless    bool
-	)
+	c := defaultChess()
+	var seed int64
 	cmd := &cobra.Command{
 		Use:   "chess",
 		Short: "Evolve a chess player (ga, neat, or evochess) against a co-evolving rival",
@@ -75,46 +85,56 @@ func init() {
 			"that strengthens over time); --opponent random plays a uniform-random mover. The " +
 			"windowed mode trains, then shows the evolved player (White) against a random opponent.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if agent != "ga" && agent != "neat" && agent != "evochess" {
-				return fmt.Errorf("chess supports only the ga, neat, and evochess agents")
-			}
-			if opponent != "random" && opponent != "coevolution" {
-				return fmt.Errorf("unknown opponent %q (want random or coevolution)", opponent)
-			}
 			log := slog.New(slog.NewTextHandler(os.Stderr, nil))
-			seed := resolveSeed(cmd, 0, log)
+			c.seed = resolveSeed(cmd, 0, log)
 
-			pop, best, err := evolveChess(agent, opponent == "coevolution", generations, population, maxPlies, depth, seed, log)
+			pop, best, err := evolveChess(c, log)
 			if err != nil {
 				return err
 			}
-			if headless {
+			if c.headless {
 				fmt.Printf("best fitness %.3f\n", best)
 				return nil
 			}
-			return watchChess(pop, maxPlies, seed, agent, log)
+			return watchChess(pop, c.maxPlies, c.seed, c.agent, log)
 		},
 	}
-	cmd.Flags().StringVar(&agent, "agent", "ga", "agent: ga, neat, or evochess")
-	cmd.Flags().StringVar(&opponent, "opponent", "coevolution", "opponent: coevolution or random")
-	cmd.Flags().IntVar(&generations, "generations", 20, "generations to evolve")
-	cmd.Flags().IntVar(&population, "population", 40, "population size")
-	cmd.Flags().IntVar(&maxPlies, "max-plies", 60, "maximum plies before a game is drawn")
-	cmd.Flags().IntVar(&depth, "depth", 2, "alpha-beta search depth (evochess only)")
+	cmd.Flags().StringVar(&c.agent, "agent", c.agent, "agent: ga, neat, or evochess")
+	cmd.Flags().StringVar(&c.opponent, "opponent", c.opponent, "opponent: coevolution or random")
+	cmd.Flags().IntVar(&c.generations, "generations", c.generations, "generations to evolve")
+	cmd.Flags().IntVar(&c.population, "population", c.population, "population size")
+	cmd.Flags().IntVar(&c.maxPlies, "max-plies", c.maxPlies, "maximum plies before a game is drawn")
+	cmd.Flags().IntVar(&c.depth, "depth", c.depth, "alpha-beta search depth (evochess only)")
 	cmd.Flags().Int64Var(&seed, "seed", 0, "run seed (default: random, logged)")
-	cmd.Flags().BoolVar(&headless, "headless", false, "train without a window")
+	cmd.Flags().BoolVar(&c.headless, "headless", false, "train without a window")
 	rootCmd.AddCommand(cmd)
 }
 
-func evolveChess(agent string, coevolve bool, generations, population, maxPlies, depth int, seed int64, log *slog.Logger) (core.PopulationAgent, float64, error) {
+// validate rejects agent and opponent names the chess environment cannot wire up.
+func (c chessParams) validate() error {
+	if c.agent != "ga" && c.agent != "neat" && c.agent != "evochess" {
+		return fmt.Errorf("chess supports only the ga, neat, and evochess agents")
+	}
+	if c.opponent != "random" && c.opponent != "coevolution" {
+		return fmt.Errorf("unknown opponent %q (want random or coevolution)", c.opponent)
+	}
+	return nil
+}
+
+func evolveChess(c chessParams, log *slog.Logger) (core.PopulationAgent, float64, error) {
+	if err := c.validate(); err != nil {
+		return nil, 0, err
+	}
+	maxPlies, seed := c.maxPlies, c.seed
+	coevolve := c.opponent == "coevolution"
 	sample := chess.New(chess.Config{MaxPlies: maxPlies})
-	pop, err := newChessAgent(agent, sample.ObservationSpec(), sample.ActionSpec(), population, depth, seed)
+	pop, err := newChessAgent(c.agent, sample.ObservationSpec(), sample.ActionSpec(), c.population, c.depth, seed)
 	if err != nil {
 		return nil, 0, err
 	}
-	tel := sim.NewTelemetry(generations, log)
-	log.Info("evolving", "agent", agent, "opponent", boolPick(coevolve, "coevolution", "random"),
-		"generations", generations, "population", population, "seed", seed)
+	tel := sim.NewTelemetry(c.generations, log)
+	log.Info("evolving", "agent", c.agent, "opponent", c.opponent,
+		"generations", c.generations, "population", c.population, "seed", seed)
 
 	var champion chess.Policy
 	evaluate := func() []float64 {
@@ -126,7 +146,7 @@ func evolveChess(agent string, coevolve bool, generations, population, maxPlies,
 	}
 
 	var fitness []float64
-	for range generations {
+	for range c.generations {
 		fitness = evaluate()
 		tel.Publish(sim.StatsFrom(pop.Generation(), fitness))
 		if coevolve {
@@ -140,21 +160,25 @@ func evolveChess(agent string, coevolve bool, generations, population, maxPlies,
 }
 
 func watchChess(pop core.PopulationAgent, maxPlies int, seed int64, agent string, log *slog.Logger) error {
-	best := bestChessPolicy(pop)
-	if best == nil {
-		return fmt.Errorf("agent %q cannot expose a best policy", agent)
+	cfg, err := chessConfig(pop, maxPlies, seed, agent)
+	if err != nil {
+		return err
 	}
-	env := chess.New(chess.Config{MaxPlies: maxPlies}) // random Black opponent
-	caps := runCaps{keymap: onlineKeymap, bounds: boundsOf(env), leader: noLeader, sensors: noSensors}
-	if err := gui.Run(onlineGUI("Galapagos — chess ("+agent+")", env, policyAgent{best}, maxPlies, seed, caps), log); err != nil {
+	if err := gui.Run(cfg, log); err != nil {
 		return fmt.Errorf("run gui: %w", err)
 	}
 	return nil
 }
 
-func boolPick(cond bool, a, b string) string {
-	if cond {
-		return a
+// chessConfig sets the evolved player (White) against a random opponent and
+// wires the game into a run the display can drive. It is display-free, so the
+// same wiring backs the window and the headless recordings in tools/demogen.
+func chessConfig(pop core.PopulationAgent, maxPlies int, seed int64, agent string) (gui.Config, error) {
+	best := bestChessPolicy(pop)
+	if best == nil {
+		return gui.Config{}, fmt.Errorf("agent %q cannot expose a best policy", agent)
 	}
-	return b
+	env := chess.New(chess.Config{MaxPlies: maxPlies}) // random Black opponent
+	caps := runCaps{keymap: onlineKeymap, bounds: boundsOf(env), leader: noLeader, sensors: noSensors}
+	return onlineGUI("Galapagos — chess ("+agent+")", env, policyAgent{best}, maxPlies, seed, caps), nil
 }

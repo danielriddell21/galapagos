@@ -35,7 +35,11 @@ const defaultRecordFPS = 25
 // The file extension picks the format: .gif or .mp4.
 func Render(cfg Config, log *slog.Logger) error {
 	r := soft.New(screenW, screenH)
-	rec := record.New(cfg.Rec)
+	// The software renderer anti-aliases, so a dithered palette turns every
+	// smooth edge into churning noise that no GIF compressor can pack. Frame
+	// diffing quantises without dithering and stores only what moved, which
+	// matters here: the HUD, the graph and most of the arena hold still.
+	rec := record.New(cfg.Rec, record.WithFrameDiff())
 
 	clip := demo.Clip{
 		Frames: cfg.Rec.Frames,

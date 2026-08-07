@@ -4,11 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-
-	"github.com/danielriddell21/crucible/record"
 )
-
-var rec record.Options
 
 var rootCmd = &cobra.Command{
 	Use:           "galapagos",
@@ -19,9 +15,6 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	// Preserve galapagos's own defaults; the flag names come from crucible.
-	rec.FPS, rec.Frames, rec.Scale = 25, 150, 2
-	rec.AddFlags(rootCmd.PersistentFlags())
 	rootCmd.AddCommand(completionCmd())
 }
 

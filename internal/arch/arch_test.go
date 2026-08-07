@@ -60,7 +60,32 @@ func TestDecouplingRules(t *testing.T) {
 				t.Errorf("%s (agent) imports an environment: %s", file, imp)
 			case under("agents"+string(filepath.Separator)) && strings.Contains(imp, "hajimehoshi"):
 				t.Errorf("%s (agent) imports Ebiten", file)
+			case under("render"+string(filepath.Separator)) && strings.Contains(imp, "hajimehoshi"):
+				t.Errorf("%s (renderer) imports Ebiten; there is one renderer and it is display-free", file)
 			}
 		}
+	}
+}
+
+// TestOnlyTheWindowLinksADisplay keeps the app on one drawing path. Every frame
+// is rasterised by internal/render/soft, whether it lands in a window or in a
+// documentation recording, so the two cannot drift apart. Only internal/gui may
+// touch Ebiten, and only to open the window and blit the finished frame.
+func TestOnlyTheWindowLinksADisplay(t *testing.T) {
+	imports := importsOf(t, "..")
+	checked := 0
+	for file, imps := range imports {
+		checked++
+		if strings.HasPrefix(file, "gui"+string(filepath.Separator)) {
+			continue
+		}
+		for _, imp := range imps {
+			if strings.Contains(imp, "hajimehoshi") {
+				t.Errorf("%s imports Ebiten; only internal/gui may", file)
+			}
+		}
+	}
+	if checked == 0 {
+		t.Fatal("no files checked; the rule is not actually being enforced")
 	}
 }

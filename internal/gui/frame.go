@@ -75,10 +75,14 @@ func drawHUD(r core.Renderer, cfg Config, st FrameState) {
 	r.Text(10, float64(y+16), fmt.Sprintf("elapsed %s", st.Elapsed.Round(time.Second)))
 }
 
+// drawKeymap lists the controls down the top-right corner. The hints are
+// keymap.Binding values so they read "key: action" like the rest of the
+// family; the column is galapagos's own, since the hints sit beside the run
+// rather than along the bottom.
 func drawKeymap(r core.Renderer, cfg Config) {
 	y := 10
-	for _, line := range cfg.Keymap {
-		r.Text(screenW-150, float64(y), line)
+	for _, b := range cfg.Keymap {
+		r.Text(screenW-150, float64(y), b.Label())
 		y += 16
 	}
 }

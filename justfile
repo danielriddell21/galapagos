@@ -48,16 +48,9 @@ wasm:
 serve: wasm
     go run ./cmd/galapagos serve
 
-# record a demo GIF per GUI tool (requires a display + OpenGL). Each tool is run
-# explicitly and writes one GIF into docs/demos/.
+# regenerate the demo media under docs/demos
 [group('run')]
 demos:
     # Rendered headlessly through the software renderer: no window, no
-    # display, no ebiten build tag. Pass a .mp4 path for video instead.
-    mkdir -p docs/demos
-    go run ./cmd/galapagos race --record docs/demos/race.gif --record-frames 220 --seed 7
-    go run ./cmd/galapagos cartpole --agent ga --record docs/demos/cartpole.gif --record-frames 180 --seed 7
-    go run ./cmd/galapagos maze --agent qlearning --record docs/demos/maze.gif --record-frames 180 --seed 7
-    go run ./cmd/galapagos cube --record docs/demos/cube.gif --record-frames 130 --seed 7
-    go run ./cmd/galapagos flappy --agent ga --record docs/demos/flappy.gif --record-frames 130 --seed 7
-    go run ./cmd/galapagos chess --agent ga --opponent coevolution --record docs/demos/chess.gif --record-frames 95 --seed 7
+    # display, no ebiten build tag. The clips are defined in tools/demogen.
+    go run ./tools/demogen

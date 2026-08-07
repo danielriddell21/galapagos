@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"github.com/danielriddell21/crucible/keymap"
 	"github.com/danielriddell21/crucible/record"
 
 	"github.com/danielriddell21/galapagos/internal/core"
@@ -8,7 +9,7 @@ import (
 
 type Config struct {
 	Title      string
-	Keymap     []string
+	Keymap     []keymap.Binding
 	Population bool
 
 	Step     func() bool
@@ -26,5 +27,6 @@ type Config struct {
 	Load       func() error
 	Regenerate func(seed int64)
 
+	// Rec names the recording [Render] writes; it is set by tools/demogen.
 	Rec record.Options
 }
