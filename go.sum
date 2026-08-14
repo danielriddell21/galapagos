@@ -3,8 +3,8 @@ github.com/danielriddell21/crucible v0.15.1 h1:HpJ+W/4iHgZwbj7uKF2D6/xc3KwDs4YmO
 github.com/danielriddell21/crucible v0.15.1/go.mod h1:zkFMgFhLCROS3nlwxK5exTI1KulRc+AuUj8ZY4SGkj4=
 github.com/danielriddell21/gambit v0.1.0 h1:aglDhDP7PUEXYx+nusdqk3hA5AJQgPvq3M9CkUr1nyw=
 github.com/danielriddell21/gambit v0.1.0/go.mod h1:ayf5UpUCbdL0N0UFMI5GfMB1mpkuTjVOQCW/gfvqvyM=
-github.com/danielriddell21/rubix v0.1.1 h1:7L7okiOvQ3DBf2DLgqhY95MP1QPPyQUYMNnGEe6YRPQ=
-github.com/danielriddell21/rubix v0.1.1/go.mod h1:0kcEne0S2zN62A4OYE6pJBt3lQPG1pmXX9OJS9+GaVo=
+github.com/danielriddell21/rubix v0.4.0 h1:mfT8wz2BWHXdJ06iGVKhLx5pkdJQLqalRvdovm2SL4k=
+github.com/danielriddell21/rubix v0.4.0/go.mod h1:cmazzF4jX/mh4Qiy4tLrDFvTdak5sG4orRgZdqG1upI=
 github.com/ebitengine/gomobile v0.0.0-20250923094054-ea854a63cce1 h1:+kz5iTT3L7uU+VhlMfTb8hHcxLO3TlaELlX8wa4XjA0=
 github.com/ebitengine/gomobile v0.0.0-20250923094054-ea854a63cce1/go.mod h1:lKJoeixeJwnFmYsBny4vvCJGVFc3aYDalhuDsfZzWHI=
 github.com/ebitengine/hideconsole v1.0.0 h1:5J4U0kXF+pv/DhiXt5/lTz0eO5ogJ1iXb8Yj1yReDqE=
