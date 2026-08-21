@@ -1,6 +1,6 @@
 github.com/cpuguy83/go-md2man/v2 v2.0.6/go.mod h1:oOW0eioCTA6cOiMLiUPZOpcVxMig6NIQQ7OS05n1F4g=
-github.com/danielriddell21/crucible v0.15.1 h1:HpJ+W/4iHgZwbj7uKF2D6/xc3KwDs4YmOT0IQuw94MU=
-github.com/danielriddell21/crucible v0.15.1/go.mod h1:zkFMgFhLCROS3nlwxK5exTI1KulRc+AuUj8ZY4SGkj4=
+github.com/danielriddell21/crucible v1.0.0 h1:18j/R9Vj6rPH2yBuw6y0/7YdhGYcJUqWQLiauQwJ9RY=
+github.com/danielriddell21/crucible v1.0.0/go.mod h1:zkFMgFhLCROS3nlwxK5exTI1KulRc+AuUj8ZY4SGkj4=
 github.com/danielriddell21/gambit v0.1.0 h1:aglDhDP7PUEXYx+nusdqk3hA5AJQgPvq3M9CkUr1nyw=
 github.com/danielriddell21/gambit v0.1.0/go.mod h1:ayf5UpUCbdL0N0UFMI5GfMB1mpkuTjVOQCW/gfvqvyM=
 github.com/danielriddell21/rubix v0.1.1 h1:7L7okiOvQ3DBf2DLgqhY95MP1QPPyQUYMNnGEe6YRPQ=
