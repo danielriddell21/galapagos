@@ -5,7 +5,7 @@ go 1.26.3
 require (
 	github.com/danielriddell21/crucible v0.15.1
 	github.com/danielriddell21/gambit v0.1.0
-	github.com/danielriddell21/rubix v0.1.1
+	github.com/danielriddell21/rubix v0.4.1
 	github.com/hajimehoshi/ebiten/v2 v2.9.9
 	github.com/spf13/cobra v1.10.2
 	gopkg.in/yaml.v3 v3.0.1
