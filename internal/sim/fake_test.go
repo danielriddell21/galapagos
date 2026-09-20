@@ -42,8 +42,11 @@ func (p *fakePop) Act(s core.State) core.Action                                 
 func (p *fakePop) Observe(s core.State, a core.Action, r core.Reward, n core.State, d bool) {}
 func (p *fakePop) EndEpisode(total core.Reward)                                             {}
 func (p *fakePop) Len() int                                                                 { return len(p.members) }
-func (p *fakePop) Generation() int                                                          { return p.gen }
-func (p *fakePop) Evolve()                                                                  { p.gen++ }
+
+func (p *fakePop) Generation() int { return p.gen }
+
+func (p *fakePop) Evolve() { p.gen++ }
+
 func (p *fakePop) All() iter.Seq[core.Individual] {
 	return func(yield func(core.Individual) bool) {
 		for _, m := range p.members {
