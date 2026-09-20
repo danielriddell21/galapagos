@@ -36,7 +36,7 @@ func init() {
 
 			fmt.Println("compiling the browser demo...")
 			if err := webui.Build(cmd.Context(), dir); err != nil {
-				return err
+				return fmt.Errorf("serve: %w", err)
 			}
 
 			url := "http://" + addr
