@@ -5,13 +5,20 @@ on:
     tags: ["v*"]
 
 jobs:
-  goreleaser:
-    # macOS so the cgo/Metal darwin binary can be built natively; a Linux
-    # clang cannot cross-build one.
-    uses: danielriddell21/github-actions/.github/workflows/release.yaml@v1
+  release:
+    # ubuntu, where the GoReleaser job needed macos: the GUI build no longer
+    # uses cgo, so there is no darwin toolchain to have natively.
+    uses: danielriddell21/github-actions/.github/workflows/release.yaml@v2
     permissions:
       contents: write
     with:
-      runs-on: macos-latest
+      # The headless build's formula comes from letsgo.mod's brew directive.
+      # This is the other half: the gui variant's archives, as a cask.
+      cask-name: galapagos
+      cask-variant: gui
+      cask-desc: Visualize learning algorithms in a native macOS window
+      cask-caveats: >-
+        The native window uses Metal and is macOS-only; it also runs every CLI
+        command. On Linux or Windows, install the formula instead.
     secrets:
       tap-app-private-key: ${{ secrets.TAP_APP_PRIVATE_KEY }}

@@ -13,8 +13,7 @@
 just build      # build the binary
 just test       # run unit tests
 just gui        # run the Ebiten GUI
-just wasm       # build the WebAssembly target
-just serve      # serve the wasm build locally
+just serve      # compile the WebAssembly demo and serve it locally
 just demos      # regenerate demo assets
 just lint       # golangci-lint
 just ci         # lint + test + build

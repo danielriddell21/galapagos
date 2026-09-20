@@ -36,16 +36,11 @@ ci: lint test build
 gui:
     go run ./cmd/galapagos race --config configs/racing.yaml
 
-# browser demo: compile the windowed demo to WebAssembly into the webui package,
-# so it is embedded into the binary and served by `galapagos serve`
-[group('build')]
-wasm:
-    GOOS=js GOARCH=wasm go build -tags ebiten -o internal/webui/web/galapagos.wasm ./cmd/galapagos
-    cp "$(go env GOROOT)/lib/wasm/wasm_exec.js" internal/webui/web/wasm_exec.js
-
-# build the browser demo, then serve it
+# compile the windowed demo to WebAssembly and serve it. The build happens
+# inside the command, into a temporary directory: the demo is not shipped in
+# the binary, so there is nothing to stage here first.
 [group('run')]
-serve: wasm
+serve:
     go run ./cmd/galapagos serve
 
 # regenerate the demo media under docs/demos

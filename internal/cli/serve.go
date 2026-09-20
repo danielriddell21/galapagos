@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"os/exec"
 	"runtime"
 	"time"
@@ -21,11 +22,23 @@ func init() {
 	cmd := &cobra.Command{
 		Use:   "serve",
 		Short: "Serve the browser (WebAssembly) demo",
-		Long:  "Serves the WebAssembly build of the windowed demo over HTTP. This works on every platform because rendering happens in the browser, not via native OpenGL.",
+		Long: "Compiles the windowed demo to WebAssembly and serves it over HTTP. " +
+			"This works on every platform because rendering happens in the browser, not via native OpenGL. " +
+			"The demo is built on demand rather than shipped inside the binary, so this needs Go and a checkout of the repository.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if !webui.Bundled() {
-				return fmt.Errorf("this build does not bundle the browser demo; install a release binary, or run `just wasm` and rebuild")
+			// A temporary directory, because the demo is cheap to rebuild and
+			// a copy left lying about is a copy that goes stale.
+			dir, err := os.MkdirTemp("", "galapagos-web-")
+			if err != nil {
+				return fmt.Errorf("serve: %w", err)
 			}
+			defer func() { _ = os.RemoveAll(dir) }()
+
+			fmt.Println("compiling the browser demo...")
+			if err := webui.Build(cmd.Context(), dir); err != nil {
+				return fmt.Errorf("serve: %w", err)
+			}
+
 			url := "http://" + addr
 			fmt.Printf("serving the Galapagos browser demo at %s\n", url)
 			if openPage {
@@ -33,7 +46,7 @@ func init() {
 			}
 			srv := &http.Server{
 				Addr:              addr,
-				Handler:           webui.Handler(),
+				Handler:           webui.Handler(dir),
 				ReadHeaderTimeout: 10 * time.Second,
 			}
 			if err := srv.ListenAndServe(); err != nil {

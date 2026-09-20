@@ -24,7 +24,6 @@ coverage.html
 # Project-specific
 /galapagos
 *.wasm
-internal/webui/web/wasm_exec.js
 best.json
 *.genome.json
 SPEC.md
