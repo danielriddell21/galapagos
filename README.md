@@ -25,13 +25,13 @@ Environments, agents and the renderer are decoupled behind small interfaces, so 
 
 ## Install
 
-On macOS, the Homebrew **cask** installs the full binary — the native window plus every CLI command and the browser demo:
+On macOS, the Homebrew **cask** installs the full binary — the native window plus every CLI command:
 
 ```bash
 brew install --cask danielriddell21/tap/galapagos
 ```
 
-On Linux (or macOS without the native window), the Homebrew **formula** installs the cross-platform CLI; the browser demo rides along via `galapagos serve`:
+On Linux (or macOS without the native window), the Homebrew **formula** installs the cross-platform CLI:
 
 ```bash
 brew install danielriddell21/tap/galapagos
@@ -43,6 +43,22 @@ Requires Go 1.26 (auto-downloaded via the toolchain directive).
 
 ```sh
 go build ./cmd/galapagos
+```
+
+### The browser demo
+
+`galapagos serve` compiles the windowed demo to WebAssembly and serves it, so
+it runs anywhere a browser does — no native OpenGL involved.
+
+It is built when you ask for it rather than shipped inside the binary: the
+WebAssembly build is 24MB, and carrying it in every archive for every platform
+made the downloads four times larger for the sake of one command. So `serve`
+needs Go and a checkout of this repository:
+
+```sh
+git clone https://github.com/danielriddell21/galapagos
+cd galapagos
+just serve
 ```
 
 <details>
