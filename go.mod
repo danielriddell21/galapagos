@@ -6,7 +6,7 @@ require (
 	github.com/danielriddell21/crucible v1.0.0
 	github.com/danielriddell21/gambit v0.6.0
 	github.com/danielriddell21/rubix v0.4.1
-	github.com/hajimehoshi/ebiten/v2 v2.10.2
+	github.com/hajimehoshi/ebiten/v2 v2.10.3
 	github.com/spf13/cobra v1.10.2
 	gopkg.in/yaml.v3 v3.0.1
 )
