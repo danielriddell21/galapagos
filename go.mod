@@ -4,7 +4,7 @@ go 1.27.1
 
 require (
 	github.com/danielriddell21/crucible v1.0.0
-	github.com/danielriddell21/gambit v0.6.0
+	github.com/danielriddell21/gambit v0.6.1
 	github.com/danielriddell21/rubix v0.4.1
 	github.com/hajimehoshi/ebiten/v2 v2.10.2
 	github.com/spf13/cobra v1.10.2
