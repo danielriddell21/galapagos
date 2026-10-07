@@ -39,7 +39,8 @@ func init() {
 				return fmt.Errorf("serve: %w", err)
 			}
 
-			url := "http://" + addr
+			// The demo server below speaks plain HTTP; this is its address.
+			url := "http://" + addr // NOSONAR
 			fmt.Printf("serving the Galapagos browser demo at %s\n", url)
 			if openPage {
 				openBrowser(url)
