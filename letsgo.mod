@@ -33,11 +33,6 @@ brew danielriddell21/tap
 // says where it actually lives. Needs letsgo v0.8.0 or later.
 brew caveats "`galapagos serve` compiles the browser demo on demand, so it needs Go and a checkout of the repository."
 
-// The shared GoReleaser workflow marked releases as pre-releases after
-// publishing; letsgo does it while publishing, so promote.yaml still fires on
-// manual promotion.
-release prerelease=true
-
 // The gui variant's archives as a cask, written to the tap with the formula.
 // Settings are in .letsgo/cask.mod.
 plugin tap-files letsgo-cask v0.6.2 sha256:db20ff8adf2a15b6b7c04b9795d30cdf5c0fd45ca866996074a90f3e7a6b7f8f
