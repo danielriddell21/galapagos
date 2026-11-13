@@ -6,7 +6,7 @@ require (
 	github.com/danielriddell21/crucible v1.0.0
 	github.com/danielriddell21/gambit v0.6.1
 	github.com/danielriddell21/rubix v0.4.2
-	github.com/hajimehoshi/ebiten/v2 v2.10.4
+	github.com/hajimehoshi/ebiten/v2 v2.10.6
 	github.com/spf13/cobra v1.10.2
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -14,7 +14,7 @@ require (
 require (
 	github.com/ebitengine/gomobile v0.0.0-20260820040257-d11f821a26a6 // indirect
 	github.com/ebitengine/hideconsole v1.0.0 // indirect
-	github.com/ebitengine/purego v0.11.0 // indirect
+	github.com/ebitengine/purego v0.11.3 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	golang.org/x/image v0.45.0 // indirect
